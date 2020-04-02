@@ -13,20 +13,20 @@ from itertools import islice
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = './DHF1K'
-    path_output = './output'
+    path_indata = '.\DHF1K_Dataset'
+    path_output = '.\output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    num_gpu = 2
+    num_gpu = 1
     pile = 5
     batch_size = 8
     num_iters = 1000
     len_temporal = 32
-    file_weight = './S3D_kinetics400.pt'
+    file_weight = '.\S3D_kinetics400.pt'
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -81,7 +81,7 @@ def main():
     torch.backends.cudnn.benchmark = False
     model.train()
 
-    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=24)
+    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=8)
 
     i, step = 0, 0
     loss_sum = 0
