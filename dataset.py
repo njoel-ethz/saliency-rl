@@ -35,7 +35,7 @@ def split_video_to_frames(old_path, file_name):
         success, frame = cap.read()
         if not success: break
         # Saves image of the current frame in jpg file
-        file_name = '%04d.png'%(currentFrame+1)
+        file_name = '%03d.png'%(currentFrame+1)
         name = os.path.join(new_path, file_name)
         # print ('Creating... ' + name)
         cv2.imwrite(name, frame)
