@@ -15,10 +15,10 @@ def transform(snippet):
     return snippet
 
 #from gist.github.com/keithweaver/70df4922fec74ea87405b83840b45d57
-def precompute_video(old_path, file_name):
+def split_video_to_frames(old_path, file_name):
     FPS = 25
 
-	# Playing video from file:
+	# Playing video from file: 384, 224
     cap = cv2.VideoCapture(os.path.join(old_path, file_name + '.mp4'))
     cap.set(cv2.CAP_PROP_FPS, FPS)
     
@@ -37,7 +37,7 @@ def precompute_video(old_path, file_name):
         # Saves image of the current frame in jpg file
         file_name = '%04d.png'%(currentFrame+1)
         name = os.path.join(new_path, file_name)
-        print ('Creating... ' + name)
+        # print ('Creating... ' + name)
         cv2.imwrite(name, frame)
         currentFrame += 1
 
@@ -62,7 +62,13 @@ class DHF1KDataset(Dataset):
         #path_clip = os.path.join(self.path_data, 'video', file_name)
 
         ###
-        path_clip = precompute_video(os.path.join(self.path_data, 'video'), file_name)
+        temp = os.path.join(os.path.join(self.path_data, 'video'), file_name)
+        if os.path.isdir(temp):
+            path_clip = temp
+            print('.')
+        else:
+            path_clip = split_video_to_frames(os.path.join(self.path_data, 'video'), file_name)
+            print(file_name + ' splitted')
         ###
 
         path_annt = os.path.join(self.path_data, 'annotation', file_name, 'maps')
@@ -78,7 +84,7 @@ class DHF1KDataset(Dataset):
             if v < 0.5:
                 img = img[:, ::-1, ...]
             clip.append(img)
-
+        
         annt = cv2.imread(os.path.join(path_annt, '%04d.png'%(start_idx+self.len_snippet)), 0)
         annt = cv2.resize(annt, (384, 224))
         if v < 0.5:

@@ -22,8 +22,8 @@ def main():
 
     # we checked that using only 2 gpus is enough to produce similar results
     num_gpu = 1
-    pile = 5
-    batch_size = 8
+    pile = 8 #5
+    batch_size = 1 #8
     num_iters = 1000
     len_temporal = 32
     file_weight = '.\S3D_kinetics400.pt'
@@ -81,12 +81,12 @@ def main():
     torch.backends.cudnn.benchmark = False
     model.train()
 
-    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=8)
+    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=1) #24
 
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()
-    for clip, annt in islice(train_loader, num_iters*pile):
+    for clip, annt in islice(train_loader, num_iters*pile): # num_iters=1000, pile=5 
         with torch.set_grad_enabled(True):
             output = model(clip.cuda())
             loss = criterion(output, annt.cuda())
