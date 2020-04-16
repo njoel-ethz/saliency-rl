@@ -1,0 +1,13 @@
+Unzip:
+FOR /F "usebackq" %a in (`DIR /s /b *.tar.bz2`) do 7z.exe e %a
+
+Github:
+Create SSH-Key
+Clone repo
+git fetch --all
+git reset origin/master
+
+
+Files: Windows -> Linux Server
+C:\Users\joel\Documents\Bachelorarbeit\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl
+unzip \*.zip

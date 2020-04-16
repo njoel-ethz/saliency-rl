@@ -13,7 +13,7 @@ from itertools import islice
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = '.\DHF1K_Dataset'
+    path_indata = '.\DHF1K_dataset' #'.\Atari_dataset\enduro'
     path_output = '.\output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
@@ -22,7 +22,7 @@ def main():
 
     # we checked that using only 2 gpus is enough to produce similar results
     num_gpu = 1
-    pile = 8 #5
+    pile = 5 #5
     batch_size = 1 #8
     num_iters = 1000
     len_temporal = 32

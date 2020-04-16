@@ -1,0 +1,8 @@
+/output/
+/Atari_dataset/
+/DHF1K_dataset/
+/Atari_dataset.zip
+/DHF1K_dataset.zip
+/.idea/
+
+*.zip

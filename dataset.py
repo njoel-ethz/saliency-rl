@@ -5,6 +5,7 @@ import numpy as np
 import os
 import torch
 from torch.utils.data import Dataset, DataLoader
+import pandas as pd
 
 def transform(snippet):
     ''' stack & noralization '''
@@ -38,6 +39,7 @@ def split_video_to_frames(old_path, file_name):
         file_name = '%04d.png'%(currentFrame+1)
         name = os.path.join(new_path, file_name)
         # print ('Creating... ' + name)
+        frame = cv2.resize(frame, (384, 224))
         cv2.imwrite(name, frame)
         currentFrame += 1
 
@@ -47,6 +49,19 @@ def split_video_to_frames(old_path, file_name):
     cv2.destroyAllWindows()
 
     return new_path
+
+def atari_reader(old_path, file_name):
+    dataframe = pd.read_csv('students.csv', delimiter=',')
+    full_data = [list(row) for row in dataframe.values]
+
+    #print(full_data)
+
+
+
+
+    new_path = os.path.join(old_path, 'video', file_name)
+    return new_path
+
 
 class DHF1KDataset(Dataset):
     def __init__(self, path_data, len_snippet):
@@ -62,13 +77,15 @@ class DHF1KDataset(Dataset):
         #path_clip = os.path.join(self.path_data, 'video', file_name)
 
         ###
-        temp = os.path.join(os.path.join(self.path_data, 'video'), file_name)
+        temp = os.path.join(self.path_data, 'video', file_name)
         if os.path.isdir(temp):
             path_clip = temp
-            print('.')
+            print(file_name)
         else:
             path_clip = split_video_to_frames(os.path.join(self.path_data, 'video'), file_name)
             print(file_name + ' splitted')
+
+        #path_clip = atari_reader(os.path.join(self.path_data, 'video'), file_name)
         ###
 
         path_annt = os.path.join(self.path_data, 'annotation', file_name, 'maps')
