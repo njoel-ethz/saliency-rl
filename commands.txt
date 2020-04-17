@@ -7,7 +7,9 @@ Clone repo
 git fetch --all
 git reset origin/master
 
-
 Files: Windows -> Linux Server
-scp C:\Users\joel\Documents\Bachelorarbeit\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl
+C:\Users\joel\Documents\Bachelorarbeit\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl
 unzip \*.zip
+
+Run:
+export CUDA_VISIBLE_DEVICES=0 && python run_train.py

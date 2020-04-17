@@ -96,6 +96,8 @@ class DHF1KDataset(Dataset):
         clip = []
         for i in range(self.len_snippet):
             img = cv2.imread(os.path.join(path_clip, '%04d.png'%(start_idx+i+1)))
+            if not os.path.isfile(img):
+                print(img + ' missing')
             img = cv2.resize(img, (384, 224))
             img = img[...,::-1]
             if v < 0.5:
