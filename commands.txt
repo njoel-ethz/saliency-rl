@@ -5,11 +5,15 @@ Github:
 Create SSH-Key
 Clone repo
 git fetch --all
-git reset origin/master
+git reset origin/master    (git reset --hard)
 
 Files: Windows -> Linux Server
 C:\Users\joel\Documents\Bachelorarbeit\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl
 unzip \*.zip
 
+Devices:
+watch -n 1 nvidia-smi
+
 Run:
-export CUDA_VISIBLE_DEVICES=0 && python run_train.py
+export CUDA_VISIBLE_DEVICES=0,1 && python run_train.py
+

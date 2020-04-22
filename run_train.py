@@ -13,20 +13,20 @@ from itertools import islice
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = '.\DHF1K_dataset' #'.\Atari_dataset\enduro'
-    path_output = '.\output'
+    path_indata = os.path.join('.', 'DHF1K_dataset') #'.\Atari_dataset\enduro'
+    path_output =  os.path.join('.', 'output')
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    num_gpu = 1
+    num_gpu = 2 #hier anzahl devices
     pile = 5 #5
-    batch_size = 1 #8
+    batch_size = 6 #8
     num_iters = 1000
     len_temporal = 32
-    file_weight = '.\S3D_kinetics400.pt'
+    file_weight = os.path.join('.', 'S3D_kinetics400.pt')
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -77,7 +77,7 @@ def main():
     criterion = KLDLoss()
 
     model = model.cuda()
-    model = torch.nn.DataParallel(model, device_ids=range(num_gpu))
+    model = torch.nn.DataParallel(model, device_ids=range(num_gpu)) #hier devices range ab 0
     torch.backends.cudnn.benchmark = False
     model.train()
 
