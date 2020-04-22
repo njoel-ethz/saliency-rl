@@ -10,20 +10,39 @@ from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader
 from itertools import islice
 
+def atari_reader(path_indata, file_name): #called if some flag (flagfile) is false
+    path_zipped = 'Atari_zipped_version'
+
+    #unzip
+
+    path_video = os.path.join(path_indata, 'video', file_name)
+    path_annt = os.path.join(path_indata, 'annotation', file_name, 'maps')
+
+    #copy images to new location and rename them to counter
+    #create saliency maps from .txt file
+        f = open(....txt, 'r')
+        full_data = f.readlines()
+        f.close()
+        #if null: interpolate from previous and next (if exists)
+        #gaussian blurr
+        #write img to annt file
+    #set flag to true
+    return true
+
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = os.path.join('.', 'DHF1K_dataset') #'.\Atari_dataset\enduro'
-    path_output =  os.path.join('.', 'output')
+    path_indata = 'DHF1K_dataset' #'Atari_dataset'
+    path_output = 'output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    num_gpu = 2 #hier anzahl devices
+    num_gpu = 1 #hier anzahl devices
     pile = 5 #5
-    batch_size = 6 #8
+    batch_size = 1 #8
     num_iters = 1000
     len_temporal = 32
     file_weight = os.path.join('.', 'S3D_kinetics400.pt')

@@ -50,19 +50,6 @@ def split_video_to_frames(old_path, file_name):
 
     return new_path
 
-def atari_reader(old_path, file_name):
-    dataframe = pd.read_csv('students.csv', delimiter=',')
-    full_data = [list(row) for row in dataframe.values]
-
-    #print(full_data)
-
-
-
-
-    new_path = os.path.join(old_path, 'video', file_name)
-    return new_path
-
-
 class DHF1KDataset(Dataset):
     def __init__(self, path_data, len_snippet):
          self.path_data = path_data
@@ -97,7 +84,7 @@ class DHF1KDataset(Dataset):
         for i in range(self.len_snippet):
             img = cv2.imread(os.path.join(path_clip, '%04d.png'%(start_idx+i+1)))
             if not os.path.isfile(os.path.join(path_clip, '%04d.png'%(start_idx+i+1))):
-                print(img + ' missing')
+                print(('%04d.png'%(start_idx+i+1)) + ' missing')
             img = cv2.resize(img, (384, 224))
             img = img[...,::-1]
             if v < 0.5:
