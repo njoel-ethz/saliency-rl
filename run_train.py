@@ -10,25 +10,6 @@ from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader
 from itertools import islice
 
-def atari_reader(path_indata, file_name): #called if some flag (flagfile) is false
-    path_zipped = 'Atari_zipped_version'
-
-    #unzip
-
-    path_video = os.path.join(path_indata, 'video', file_name)
-    path_annt = os.path.join(path_indata, 'annotation', file_name, 'maps')
-
-    #copy images to new location and rename them to counter
-    #create saliency maps from .txt file
-        f = open(....txt, 'r')
-        full_data = f.readlines()
-        f.close()
-        #if null: interpolate from previous and next (if exists)
-        #gaussian blurr
-        #write img to annt file
-    #set flag to true
-    return true
-
 def main():
     ''' concise script for training '''
     # optional two command-line arguments

@@ -15,41 +15,6 @@ def transform(snippet):
     snippet = snippet.view(-1,3,snippet.size(1),snippet.size(2)).permute(1,0,2,3)
     return snippet
 
-#from gist.github.com/keithweaver/70df4922fec74ea87405b83840b45d57
-def split_video_to_frames(old_path, file_name):
-    FPS = 25
-
-	# Playing video from file: 384, 224
-    cap = cv2.VideoCapture(os.path.join(old_path, file_name + '.mp4'))
-    cap.set(cv2.CAP_PROP_FPS, FPS)
-    
-    new_path = os.path.join(old_path, file_name)
-    try:
-        if not os.path.exists(new_path):
-            os.makedirs(new_path)
-    except OSError:
-        print ('Error: Creating directory of data')
-
-    currentFrame = 0
-    while(True):
-        # Capture frame-by-frame
-        success, frame = cap.read()
-        if not success: break
-        # Saves image of the current frame in jpg file
-        file_name = '%04d.png'%(currentFrame+1)
-        name = os.path.join(new_path, file_name)
-        # print ('Creating... ' + name)
-        frame = cv2.resize(frame, (384, 224))
-        cv2.imwrite(name, frame)
-        currentFrame += 1
-
-        
-    # When everything done, release the capture
-    cap.release()
-    cv2.destroyAllWindows()
-
-    return new_path
-
 class DHF1KDataset(Dataset):
     def __init__(self, path_data, len_snippet):
          self.path_data = path_data
@@ -69,8 +34,8 @@ class DHF1KDataset(Dataset):
             path_clip = temp
             print(file_name)
         else:
-            path_clip = split_video_to_frames(os.path.join(self.path_data, 'video'), file_name)
-            print(file_name + ' splitted')
+            path_clip = null #path_clip = split_video_to_frames(os.path.join(self.path_data, 'video'), file_name)
+            print(file_name + ' missing, preprocessing.py needed')
 
         #path_clip = atari_reader(os.path.join(self.path_data, 'video'), file_name)
         ###
