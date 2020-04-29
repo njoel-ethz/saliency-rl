@@ -47,16 +47,16 @@ class DHF1KDataset(Dataset):
         v = np.random.random()
         clip = []
         for i in range(self.len_snippet):
-            img = cv2.imread(os.path.join(path_clip, '%04d.png'%(start_idx+i+1)))
-            if not os.path.isfile(os.path.join(path_clip, '%04d.png'%(start_idx+i+1))):
-                print(('%04d.png'%(start_idx+i+1)) + ' missing')
+            img = cv2.imread(os.path.join(path_clip, '%06d.png'%(start_idx+i+1)))
+            if not os.path.isfile(os.path.join(path_clip, '%06d.png'%(start_idx+i+1))):
+                print(('%06d.png'%(start_idx+i+1)) + ' missing')
             img = cv2.resize(img, (384, 224))
             img = img[...,::-1]
             if v < 0.5:
                 img = img[:, ::-1, ...]
             clip.append(img)
         
-        annt = cv2.imread(os.path.join(path_annt, '%04d.png'%(start_idx+self.len_snippet)), 0)
+        annt = cv2.imread(os.path.join(path_annt, '%06d.png'%(start_idx+self.len_snippet)), 0)
         annt = cv2.resize(annt, (384, 224))
         if v < 0.5:
             annt = annt[:, ::-1]
