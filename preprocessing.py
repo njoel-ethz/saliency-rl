@@ -93,7 +93,9 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
 
 def create_gaussian_map(positions, null_flag):
     if null_flag:
-        return np.zeros((384, 224), np.uint8)
+        return np.zeros((160, 210), np.uint8)
+    else:
+        return np.zeros((160, 210), np.uint8)
     #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
 
 def interpolate_null_values(full_data, null_values, path_annt, num_frame):
