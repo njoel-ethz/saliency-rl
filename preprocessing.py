@@ -50,7 +50,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         seq_number = int(seq_number[:-4])
                         os.rename(os.path.join(sample_path, frame), os.path.join(sample_path, '%06d' %seq_number + '.png'))
                         #print(frame + " ---> " + '%06d' %seq_number)
-                        print(cv2.imread(os.path.join(sample_path, '%06d' %seq_number + '.png')).shape) #(210, 160, 3)
+                        #print(cv2.imread(os.path.join(sample_path, '%06d' %seq_number + '.png')).shape) #(210, 160, 3)
 
                     #creating maps
                     path_annt = os.path.join(annotation, '%04d' % counter, 'maps')
@@ -67,35 +67,51 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                     null_values = []
                     for line in full_data:
                         line = line.split(',')
-                        frame_id = line[0].split('_')[2]
+                        frame_id = int(line[0].split('_')[2])
                         episode_id = line[1]
                         score = line[2]
                         duration = line[3]
                         unclipped_reward = line[4]
                         action = line[5]
                         gaze_positions = line[6:]
-                        if (gaze_positions[0]=='null'):
-                            saliency_map = create_gaussian_map(gaze_positions, 1)
-                        else:
+                        saliency_map = np.zeros((160, 210, 3), np.uint8)
+                        if gaze_positions[0]!= 'null':
                             saliency_map = create_gaussian_map(gaze_positions, 0)
-                        cv2.imwrite(os.path.join(path_annt, '%06d.png' %int(frame_id)), saliency_map)
+                        if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
+                            print("could not write image!")
 
                     number_of_frames.append(frame_id)
 
                     #interpolate null values
                     #interpolate_null_values(full_data, null_values, path_annt, frame_id)
-
+    print(np.shape(number_of_frames))
+    print(number_of_frames)
     if os.path.isfile(num_frame_path):
         os.remove(num_frame_path)
-    with open(num_frame_path, "wb") as f:
+    with open(num_frame_path, "w") as f:
         writer = csv.writer(f)
-        writer.writerows(number_of_frames)
+        for element in number_of_frames:
+            writer.writerow([element])
 
 def create_gaussian_map(positions, null_flag):
     if null_flag:
-        return np.zeros((160, 210), np.uint8)
+        return np.zeros((160, 210, 3), np.uint8)
     else:
-        return np.zeros((160, 210), np.uint8)
+        x = np.array(positions[::2])
+        y = np.array(positions[1::2])
+        x = (x.astype(np.float)).astype(np.int)
+        y = (y.astype(np.float)).astype(np.int)
+        if x.size != y.size:
+            print("Error: Length of x and y vary")
+        img =  np.zeros((160, 210, 3), np.uint8)
+        for i in range(len(x)):
+            x_temp = x[i]
+            y_temp = y[i]
+            if (x_temp>=160): x_temp = 159
+            if (y_temp>=210): y_temp = 209
+            img[x_temp,y_temp:] = 1
+        blurred_img = cv2.GaussianBlur(img,(9,9), 0)
+        return blurred_img
     #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
 
 def interpolate_null_values(full_data, null_values, path_annt, num_frame):
