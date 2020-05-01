@@ -20,6 +20,8 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
 
 
     # unzip
+    if not os.path.exists(annotation):
+        os.makedirs(annotation)
     for file in os.listdir(path_indata):
         if file.endswith("zip"):
             current_path = os.path.join(path_indata, file)
@@ -44,6 +46,11 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                     if os.path.isdir(sample_path):
                         shutil.rmtree(sample_path)
                     os.rename(temp, sample_path)
+                    path_annt = os.path.join(annotation, '%04d' % counter, 'maps')
+                    if os.path.isdir(os.path.join(annotation,'%04d' % counter)):
+                        shutil.rmtree(os.path.join(annotation,'%04d' % counter))
+                    os.makedirs(os.path.join(annotation,'%04d' % counter))
+                    os.makedirs(path_annt)
 
                     for frame in os.listdir(sample_path):
                         seq_number = frame.split('_')[2]
@@ -53,7 +60,6 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         #print(cv2.imread(os.path.join(sample_path, '%06d' %seq_number + '.png')).shape) #(210, 160, 3)
 
                     #creating maps
-                    path_annt = os.path.join(annotation, '%04d' % counter, 'maps')
                     path_txt = current_game_path[:-8] + '.txt'
                     f = open(path_txt, 'r')
                     lines_data = f.readlines()
@@ -74,11 +80,13 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         unclipped_reward = line[4]
                         action = line[5]
                         gaze_positions = line[6:]
-                        saliency_map = np.zeros((160, 210, 3), np.uint8)
+                        saliency_map = np.zeros((210, 160, 3), np.uint8)
                         if gaze_positions[0]!= 'null':
                             saliency_map = create_gaussian_map(gaze_positions, 0)
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
                             print("could not write image!")
+                        else:
+                            print("easy")
 
                     number_of_frames.append(frame_id)
 
@@ -95,7 +103,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
 
 def create_gaussian_map(positions, null_flag):
     if null_flag:
-        return np.zeros((160, 210, 3), np.uint8)
+        return np.zeros((210, 160, 3), np.uint8)
     else:
         x = np.array(positions[::2])
         y = np.array(positions[1::2])
@@ -103,13 +111,13 @@ def create_gaussian_map(positions, null_flag):
         y = (y.astype(np.float)).astype(np.int)
         if x.size != y.size:
             print("Error: Length of x and y vary")
-        img =  np.zeros((160, 210, 3), np.uint8)
+        img =  np.zeros((210, 160, 3), np.uint8)
         for i in range(len(x)):
             x_temp = x[i]
             y_temp = y[i]
             if (x_temp>=160): x_temp = 159
             if (y_temp>=210): y_temp = 209
-            img[x_temp,y_temp:] = 1
+            img[y_temp,x_temp:] = 255
         blurred_img = cv2.GaussianBlur(img,(9,9), 0)
         return blurred_img
     #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
