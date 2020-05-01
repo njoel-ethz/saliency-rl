@@ -88,7 +88,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
     print(number_of_frames)
     if os.path.isfile(num_frame_path):
         os.remove(num_frame_path)
-    with open(num_frame_path, "w") as f:
+    with open(num_frame_path, "w", newline = '') as f:
         writer = csv.writer(f)
         for element in number_of_frames:
             writer.writerow([element])
