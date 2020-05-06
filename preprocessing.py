@@ -48,7 +48,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                     os.rename(temp, sample_path)
                     path_annt = os.path.join(annotation, '%04d' % counter, 'maps')
                     if os.path.isdir(os.path.join(annotation,'%04d' % counter)):
-                        shutil.rmtree(os.path.join(annotation,'%04d' % counter))
+                        shutil.rmtree(os.path.join(annotation,'%04d' % counter)) #ignore_errors=True
                     os.makedirs(os.path.join(annotation,'%04d' % counter))
                     os.makedirs(path_annt)
 
@@ -85,14 +85,11 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                             saliency_map = create_gaussian_map(gaze_positions, 0)
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
                             print("could not write image!")
-                        else:
-                            print("easy")
 
                     number_of_frames.append(frame_id)
 
                     #interpolate null values
                     #interpolate_null_values(full_data, null_values, path_annt, frame_id)
-    print(np.shape(number_of_frames))
     print(number_of_frames)
     if os.path.isfile(num_frame_path):
         os.remove(num_frame_path)
@@ -109,16 +106,21 @@ def create_gaussian_map(positions, null_flag):
         y = np.array(positions[1::2])
         x = (x.astype(np.float)).astype(np.int)
         y = (y.astype(np.float)).astype(np.int)
-        if x.size != y.size:
+        if len(x) != len(y):
             print("Error: Length of x and y vary")
-        img =  np.zeros((210, 160, 3), np.uint8)
+        img = np.zeros((210, 160, 3), np.uint8)
         for i in range(len(x)):
             x_temp = x[i]
             y_temp = y[i]
-            if (x_temp>=160): x_temp = 159
-            if (y_temp>=210): y_temp = 209
-            img[y_temp,x_temp:] = 255
-        blurred_img = cv2.GaussianBlur(img,(9,9), 0)
+            if (x_temp >= 160):
+                #print("overflow x by :" + str(x_temp - 159))
+                x_temp = 159
+            if (y_temp >= 210):
+                #print("overflow y :" + str(y_temp - 210))
+                y_temp = 209
+            cv2.circle(img, (x_temp, y_temp), 12, (255, 255, 255), -1)
+            #print(str(x[i]) + ", " + str(y[i]))
+        blurred_img = cv2.GaussianBlur(img, (49, 49), 0)
         return blurred_img
     #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
 
@@ -191,8 +193,22 @@ def main():
     ''' preprocessing of input data '''
     # split into frames if needed
     # read in atari data and save accordingly
+    yes = set(['yes', 'y'])
+    no = set(['no', 'n', ''])
+    answered = False
+    while not answered:
+        answer = input("Preprocess Atari data? (y/n) ").lower()
+        answered = True
+        if answer in yes:
+            atari_reader('Atari_dataset')
+    answered = False
+    """while not answered:
+        answer = input("Split frames of DHF1K data? (y/n) ").lower()
+        answered = True
+        if answer in yes:
+            
+            split_video_to_frames()"""
 
-    atari_reader('Atari_dataset')
 
 
 if __name__ == '__main__':

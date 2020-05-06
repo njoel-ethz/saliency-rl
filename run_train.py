@@ -13,7 +13,7 @@ from itertools import islice
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = 'DHF1K_dataset' #'Atari_dataset'
+    path_indata = 'Atari_dataset' #'DHF1K_dataset'
     path_output = 'output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
