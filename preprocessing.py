@@ -85,7 +85,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                             saliency_map = create_gaussian_map(gaze_positions, 0)
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
                             print("could not write image!")
-
+                    print(frame_id)
                     number_of_frames.append(frame_id)
 
                     #interpolate null values
@@ -120,7 +120,7 @@ def create_gaussian_map(positions, null_flag):
                 y_temp = 209
             cv2.circle(img, (x_temp, y_temp), 12, (255, 255, 255), -1)
             #print(str(x[i]) + ", " + str(y[i]))
-        blurred_img = cv2.GaussianBlur(img, (49, 49), 0)
+        blurred_img = cv2.GaussianBlur(img, (61, 61), 0)
         return blurred_img
     #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
 
@@ -201,13 +201,13 @@ def main():
         answered = True
         if answer in yes:
             atari_reader('Atari_dataset')
-    answered = False
-    """while not answered:
+    #answered = False
+    while not answered:
         answer = input("Split frames of DHF1K data? (y/n) ").lower()
         answered = True
         if answer in yes:
-            
-            split_video_to_frames()"""
+            #split_video_to_frames()
+            break
 
 
 
