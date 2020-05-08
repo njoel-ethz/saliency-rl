@@ -106,7 +106,6 @@ def main():
             plt.plot(loss_statistic)
             plt.ylabel('loss')
             plt.savefig(os.path.join(path_indata, "loss.png"))
-            plt.show()
 
             return
 
@@ -122,7 +121,7 @@ def main():
                 loss_visualizer = loss_visualizer + 'I'
 
             # whole process takes less than 3 hours
-            print ('iteration: [%4d/%4d], loss: %.4f, %s' + loss_visualizer % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
+            print ('iteration: [%4d/%4d], loss: %.4f, %s'  % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
             loss_statistic.append(loss_sum/pile)
             loss_sum = 0
 

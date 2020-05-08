@@ -8,8 +8,9 @@ git fetch --all
 git reset origin/master    (git reset --hard)
 
 Files: Windows -> Linux Server
-C:\Users\joel\Documents\Bachelorarbeit\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl
+scp C:\Users\joel\Documents\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset.zip
 unzip \*.zip
+scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/loss.png C:\Users\joel\Documents\saliency-rl\Atari_dataset\loss_server.png
 
 Devices:
 watch -n 1 nvidia-smi
