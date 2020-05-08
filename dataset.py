@@ -32,17 +32,17 @@ class DHF1KDataset(Dataset):
         temp = os.path.join(self.path_data, 'video', file_name)
         if os.path.isdir(temp):
             path_clip = temp
-            print(file_name)
         else:
             path_clip = null #path_clip = split_video_to_frames(os.path.join(self.path_data, 'video'), file_name)
             print(file_name + ' missing, preprocessing.py needed')
+            return
 
         #path_clip = atari_reader(os.path.join(self.path_data, 'video'), file_name)
         ###
 
         path_annt = os.path.join(self.path_data, 'annotation', file_name, 'maps')
 
-        start_idx = np.random.randint(0, self.list_num_frame[idx]-self.len_snippet+1)
+        start_idx = np.random.randint(0, self.list_num_frame[idx]-self.len_snippet+1) #(0, ..) to keep first frame
 
         v = np.random.random()
         clip = []
@@ -61,7 +61,7 @@ class DHF1KDataset(Dataset):
         if v < 0.5:
             annt = annt[:, ::-1]
 
-        return transform(clip), torch.from_numpy(annt.copy()).contiguous().float()
+        return transform(clip), torch.from_numpy(annt.copy()).contiguous().float(), "start frame: " + str(start_idx) + " from file: " + str(file_name)
 
 # from gist.github.com/MFreidank/821cc87b012c53fade03b0c7aba13958
 class InfiniteDataLoader(DataLoader):

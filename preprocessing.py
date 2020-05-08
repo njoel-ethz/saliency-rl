@@ -32,6 +32,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
             for game_file in os.listdir(game_path):
                 # print("     "+game_file)
                 if game_file.endswith("tar.bz2"):
+                    sample_name = game_file.split('_')[1]
                     # untar
                     current_game_path = os.path.join(game_path, game_file)
                     tar = tarfile.open(current_game_path, "r:bz2")
@@ -41,6 +42,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                     # renaming videos
                     counter += 1
                     print('-- -- '+str(counter)+' -- --')
+                    print(game_file.split('.')[0])
                     temp = os.path.join(video, game_file[:-8])
                     sample_path = os.path.join(video, '%04d' % counter)
                     if os.path.isdir(sample_path):
@@ -66,11 +68,12 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                     f.close()
                     full_data = ''.join(lines_data)
                     full_data = full_data.replace('\n', '')
-                    full_data = full_data.split('RZ')
+                    full_data = full_data.split(sample_name)
                     full_data.pop(0)  # frame_id,episode_id,score,duration(ms),unclipped_reward,action,gaze_positions
 
                     frame_id = 0
-                    null_values = []
+                    prev_gaze_positions = []
+                    #null_values = []
                     for line in full_data:
                         line = line.split(',')
                         frame_id = int(line[0].split('_')[2])
@@ -80,9 +83,17 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         unclipped_reward = line[4]
                         action = line[5]
                         gaze_positions = line[6:]
-                        saliency_map = np.zeros((210, 160, 3), np.uint8)
                         if gaze_positions[0]!= 'null':
-                            saliency_map = create_gaussian_map(gaze_positions, 0)
+                            prev_gaze_positions = gaze_positions
+                            saliency_map = create_gaussian_map(gaze_positions)
+                        else:
+                            #if positions is Null
+                            #empty_img = np.zeros((210, 160, 3), np.uint8)
+                            #saliency_map = cv2.cvtColor(empty_img, cv2.COLOR_BGR2GRAY)
+                            if len(prev_gaze_positions)==0:
+                                print("Error: could not interpolate " + str(frame_id))
+                                return
+                            saliency_map = create_gaussian_map(prev_gaze_positions)
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
                             print("could not write image!")
                     print(frame_id)
@@ -98,30 +109,27 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
         for element in number_of_frames:
             writer.writerow([element])
 
-def create_gaussian_map(positions, null_flag):
-    if null_flag:
-        return np.zeros((210, 160, 3), np.uint8)
-    else:
-        x = np.array(positions[::2])
-        y = np.array(positions[1::2])
-        x = (x.astype(np.float)).astype(np.int)
-        y = (y.astype(np.float)).astype(np.int)
-        if len(x) != len(y):
-            print("Error: Length of x and y vary")
-        img = np.zeros((210, 160, 3), np.uint8)
-        for i in range(len(x)):
-            x_temp = x[i]
-            y_temp = y[i]
-            if (x_temp >= 160):
-                #print("overflow x by :" + str(x_temp - 159))
-                x_temp = 159
-            if (y_temp >= 210):
-                #print("overflow y :" + str(y_temp - 210))
-                y_temp = 209
-            cv2.circle(img, (x_temp, y_temp), 12, (255, 255, 255), -1)
-            #print(str(x[i]) + ", " + str(y[i]))
-        blurred_img = cv2.GaussianBlur(img, (61, 61), 0)
-        return blurred_img
+def create_gaussian_map(positions):
+    x = np.array(positions[::2])
+    y = np.array(positions[1::2])
+    x = (x.astype(np.float)).astype(np.int)
+    y = (y.astype(np.float)).astype(np.int)
+    if len(x) != len(y):
+        print("Error: Length of x and y vary")
+    img = np.zeros((210, 160, 3), np.uint8)
+    for i in range(len(x)):
+        x_temp = x[i]
+        y_temp = y[i]
+        if (x_temp >= 160): x_temp = 159
+            #print("overflow x by :" + str(x_temp - 159))
+        if (x_temp < 0): x_temp = 0
+        if (y_temp >= 210): y_temp = 209
+            #print("overflow y :" + str(y_temp - 210))
+        if (y_temp < 0): y_temp = 0
+        cv2.circle(img, (x_temp, y_temp), 12, (255, 255, 255), -1)
+        #print(str(x[i]) + ", " + str(y[i]))
+    blurred_img = cv2.cvtColor(cv2.GaussianBlur(img, (69, 69), 0), cv2.COLOR_BGR2GRAY)
+    return blurred_img
     #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
 
 def interpolate_null_values(full_data, null_values, path_annt, num_frame):

@@ -2,13 +2,17 @@ import sys
 import os
 import numpy as np
 import cv2
+import math
 import time
-from datetime import timedelta
+
 import torch
+import matplotlib.pyplot as plt
+from datetime import timedelta
 from model import TASED_v2
 from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader
 from itertools import islice
+
 
 def main():
     ''' concise script for training '''
@@ -26,7 +30,8 @@ def main():
     batch_size = 1 #8
     num_iters = 1000
     len_temporal = 32
-    file_weight = os.path.join('.', 'S3D_kinetics400.pt')
+    #file_weight = os.path.join('.', 'S3D_kinetics400.pt')
+    file_weight = os.path.join('.', 'TASED_updated.pt')
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -82,24 +87,43 @@ def main():
     model.train()
 
     train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=1) #24
-
+    loss_statistic = []
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()
-    for clip, annt in islice(train_loader, num_iters*pile): # num_iters=1000, pile=5 
+    for clip, annt, sample_description in islice(train_loader, num_iters*pile): # num_iters=1000, pile=5
+        #print(sample_description[0])
         with torch.set_grad_enabled(True):
             output = model(clip.cuda())
             loss = criterion(output, annt.cuda())
+        current_loss = loss.item()
+        #print("current loss: " + str(current_loss))
 
-        loss_sum += loss.item()
+        if math.isnan(current_loss):
+            print("nan in " + str(sample_description[0]))
+            print("-----------------")
+            print(annt)
+            plt.plot(loss_statistic)
+            plt.ylabel('loss')
+            plt.savefig(os.path.join(path_indata, "loss.png"))
+            plt.show()
+
+            return
+
+        loss_sum += current_loss
         loss.backward()
         if (i+1) % pile == 0:
             optimizer.step()
             optimizer.zero_grad()
             step += 1
 
+            loss_visualizer = '  '
+            for i in range (int(10.0*(loss_sum/pile))):
+                loss_visualizer = loss_visualizer + 'I'
+
             # whole process takes less than 3 hours
-            print ('iteration: [%4d/%4d], loss: %.4f, %s' % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
+            print ('iteration: [%4d/%4d], loss: %.4f, %s' + loss_visualizer % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
+            loss_statistic.append(loss_sum/pile)
             loss_sum = 0
 
             # adjust learning rate
@@ -112,7 +136,9 @@ def main():
                 torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
 
         i += 1
-
+    plt.plot(loss_statistic)
+    plt.ylabel('loss')
+    plt.savefig(os.path.join(path_indata, "loss.png"))
 
 if __name__ == '__main__':
     main()
