@@ -2,10 +2,8 @@ import os
 import csv
 import cv2
 import numpy as np
-import os
 import torch
 from torch.utils.data import Dataset, DataLoader
-import pandas as pd
 
 def transform(snippet):
     ''' stack & noralization '''
@@ -26,42 +24,27 @@ class DHF1KDataset(Dataset):
 
     def __getitem__(self, idx):
         file_name = '%04d'%(idx+1)
-        #path_clip = os.path.join(self.path_data, 'video', file_name)
-
-        ###
-        temp = os.path.join(self.path_data, 'video', file_name)
-        if os.path.isdir(temp):
-            path_clip = temp
-        else:
-            path_clip = null #path_clip = split_video_to_frames(os.path.join(self.path_data, 'video'), file_name)
-            print(file_name + ' missing, preprocessing.py needed')
-            return
-
-        #path_clip = atari_reader(os.path.join(self.path_data, 'video'), file_name)
-        ###
-
+        path_clip = os.path.join(self.path_data, 'video', file_name)
         path_annt = os.path.join(self.path_data, 'annotation', file_name, 'maps')
 
-        start_idx = np.random.randint(0, self.list_num_frame[idx]-self.len_snippet+1) #(0, ..) to keep first frame
+        start_idx = np.random.randint(0, self.list_num_frame[idx]-self.len_snippet+1)
 
         v = np.random.random()
         clip = []
         for i in range(self.len_snippet):
             img = cv2.imread(os.path.join(path_clip, '%06d.png'%(start_idx+i+1)))
-            if not os.path.isfile(os.path.join(path_clip, '%06d.png'%(start_idx+i+1))):
-                print(('%06d.png'%(start_idx+i+1)) + ' missing')
             img = cv2.resize(img, (384, 224))
             img = img[...,::-1]
             if v < 0.5:
                 img = img[:, ::-1, ...]
             clip.append(img)
-        
+
         annt = cv2.imread(os.path.join(path_annt, '%06d.png'%(start_idx+self.len_snippet)), 0)
         annt = cv2.resize(annt, (384, 224))
         if v < 0.5:
             annt = annt[:, ::-1]
 
-        return transform(clip), torch.from_numpy(annt.copy()).contiguous().float(), "start frame: " + str(start_idx) + " from file: " + str(file_name)
+        return transform(clip), torch.from_numpy(annt.copy()).contiguous().float()
 
 # from gist.github.com/MFreidank/821cc87b012c53fade03b0c7aba13958
 class InfiniteDataLoader(DataLoader):

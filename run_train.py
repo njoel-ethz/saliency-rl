@@ -2,36 +2,32 @@ import sys
 import os
 import numpy as np
 import cv2
-import math
 import time
-
-import torch
-import matplotlib.pyplot as plt
 from datetime import timedelta
+import torch
 from model import TASED_v2
 from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader
 from itertools import islice
-
+import matplotlib.pyplot as plt
 
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = 'Atari_dataset' #'DHF1K_dataset'
-    path_output = 'output'
+    path_indata = './Atari_dataset'
+    path_output = './output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    num_gpu = 1 #hier anzahl devices
-    pile = 5 #5
-    batch_size = 1 #8
+    num_gpu = 1
+    pile = 5
+    batch_size = 1
     num_iters = 1000
     len_temporal = 32
-    #file_weight = os.path.join('.', 'S3D_kinetics400.pt')
-    file_weight = os.path.join('.', 'TASED_updated.pt')
+    file_weight = './Tased_updated.pt'
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -82,48 +78,32 @@ def main():
     criterion = KLDLoss()
 
     model = model.cuda()
-    model = torch.nn.DataParallel(model, device_ids=range(num_gpu)) #hier devices range ab 0
+    model = torch.nn.DataParallel(model, device_ids=range(num_gpu))
     torch.backends.cudnn.benchmark = False
     model.train()
 
-    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=1) #24
+    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=1)
+
     loss_statistic = []
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()
-    for clip, annt, sample_description in islice(train_loader, num_iters*pile): # num_iters=1000, pile=5
-        #print(sample_description[0])
+    for clip, annt in islice(train_loader, num_iters*pile):
         with torch.set_grad_enabled(True):
             output = model(clip.cuda())
             loss = criterion(output, annt.cuda())
-        current_loss = loss.item()
-        #print("current loss: " + str(current_loss))
 
-        if math.isnan(current_loss):
-            print("nan in " + str(sample_description[0]))
-            print("-----------------")
-            print(annt)
-            plt.plot(loss_statistic)
-            plt.ylabel('loss')
-            plt.savefig(os.path.join(path_indata, "loss.png"))
-
-            return
-
-        loss_sum += current_loss
+        loss_sum += loss.item()
         loss.backward()
         if (i+1) % pile == 0:
             optimizer.step()
             optimizer.zero_grad()
             step += 1
 
-            loss_visualizer = '  '
-            for i in range (int(10.0*(loss_sum/pile))):
-                loss_visualizer = loss_visualizer + 'I'
-
             # whole process takes less than 3 hours
-            print ('iteration: [%4d/%4d], loss: %.4f, %s'  % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
-            loss_statistic.append(loss_sum/pile)
+            print ('iteration: [%4d/%4d], loss: %.4f, %s' % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
             loss_sum = 0
+            loss_statistic.append(loss_sum/pile)
 
             # adjust learning rate
             if step in [750, 950]:
@@ -135,10 +115,11 @@ def main():
                 torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
 
         i += 1
+    print('plotten:')
     plt.plot(loss_statistic)
     plt.ylabel('loss')
     plt.savefig(os.path.join(path_indata, "loss.png"))
 
+
 if __name__ == '__main__':
     main()
-

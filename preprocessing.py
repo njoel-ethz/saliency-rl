@@ -91,11 +91,11 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                             #empty_img = np.zeros((210, 160, 3), np.uint8)
                             #saliency_map = cv2.cvtColor(empty_img, cv2.COLOR_BGR2GRAY)
                             if len(prev_gaze_positions)==0:
-                                print("Error: could not interpolate " + str(frame_id))
+                                print("Error: could not interpolate " + str(frame_id), flush=True)
                                 return
                             saliency_map = create_gaussian_map(prev_gaze_positions)
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
-                            print("could not write image!")
+                            print("could not write image!", flush=True)
                     print(frame_id)
                     number_of_frames.append(frame_id)
 
@@ -160,6 +160,7 @@ def interpolate_null_values(full_data, null_values, path_annt, num_frame):
                     imgs.append(cv2.imread(os.path.join(path_annt, '%06d.png' % temp_id)))
                     #.....
         new_map = np.zeros(shape=[384, 224, 3], dtype=np.uint8)
+
         cv2.imwrite(os.path.join(path_annt, '%06d.png' % id), new_map)
 
 # from gist.github.com/keithweaver/70df4922fec74ea87405b83840b45d57
