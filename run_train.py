@@ -102,9 +102,10 @@ def main():
 
             # whole process takes less than 3 hours
             print ('iteration: [%4d/%4d], loss: %.4f, %s' % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
-            loss_sum = 0
+
             loss_statistic.append(loss_sum/pile)
 
+            loss_sum = 0
             # adjust learning rate
             if step in [750, 950]:
                 for opt in optimizer.param_groups:
