@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = './Atari_dataset'
-    path_output = './output'
+    path_indata = 'Atari_dataset'
+    path_output = 'output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
@@ -27,7 +27,7 @@ def main():
     batch_size = 1
     num_iters = 1000
     len_temporal = 32
-    file_weight = './Tased_updated.pt'
+    file_weight = 'TASED_updated.pt'
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -85,6 +85,9 @@ def main():
     train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=1)
 
     loss_statistic = []
+    averaged_loss_statistic = []
+    index_statistic = []
+
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()
@@ -104,22 +107,31 @@ def main():
             print ('iteration: [%4d/%4d], loss: %.4f, %s' % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
 
             loss_statistic.append(loss_sum/pile)
+            if step%10==0:
+                averaged_loss_statistic.append(sum(loss_statistic[step-10:step])/10)
+                index_statistic.append(step)
 
             loss_sum = 0
-            # adjust learning rate
+            """""# adjust learning rate
             if step in [750, 950]:
                 for opt in optimizer.param_groups:
                     if 'new' in opt['key']:
-                        opt['lr'] *= 0.1
+                        opt['lr'] *= 0.1"""
 
             if step % 25 == 0:
                 torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
 
         i += 1
-    print('plotten:')
+    torch.save(model.state_dict(), os.path.join(path_indata, 'Atari_weight_file'))
+
+    print('plotten')
     plt.plot(loss_statistic)
     plt.ylabel('loss')
     plt.savefig(os.path.join(path_indata, "loss.png"))
+
+    plt.plot(index_statistic, averaged_loss_statistic)
+    plt.ylabel('averaged loss')
+    plt.savefig(os.path.join(path_indata, "averaged loss.png"))
 
 
 if __name__ == '__main__':
