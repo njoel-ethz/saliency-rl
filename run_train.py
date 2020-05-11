@@ -72,9 +72,9 @@ def main():
         if 'convtsp' in key:
             params += [{'params':[value], 'key':key+'(new)'}]
         else:
-            params += [{'params':[value], 'lr':0.001, 'key':key}]
+            params += [{'params':[value], 'lr':0.01, 'key':key}] #0.001
 
-    optimizer = torch.optim.SGD(params, lr=0.2, momentum=0.9, weight_decay=2e-7) #lr = 0.1
+    optimizer = torch.optim.SGD(params, lr=0.3, momentum=0.9, weight_decay=2e-7) #lr = 0.1
     criterion = KLDLoss()
 
     model = model.cuda()
@@ -112,13 +112,11 @@ def main():
                 index_statistic.append(step)
 
             loss_sum = 0
-            x=0
             # adjust learning rate
             if step in [750, 950]:
                 for opt in optimizer.param_groups:
                     if 'new' in opt['key']:
-                        x += 1
-                        #opt['lr'] *= 0.1   #0.1
+                        opt['lr'] *= 0.1   #0.1
 
             if step % 25 == 0:
                 torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
