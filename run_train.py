@@ -74,7 +74,7 @@ def main():
         else:
             params += [{'params':[value], 'lr':0.001, 'key':key}]
 
-    optimizer = torch.optim.SGD(params, lr=0.1, momentum=0.9, weight_decay=2e-7)
+    optimizer = torch.optim.SGD(params, lr=0.2, momentum=0.9, weight_decay=2e-7) #lr = 0.1
     criterion = KLDLoss()
 
     model = model.cuda()
@@ -82,7 +82,7 @@ def main():
     torch.backends.cudnn.benchmark = False
     model.train()
 
-    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=1)
+    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=8)
 
     loss_statistic = []
     averaged_loss_statistic = []
@@ -112,11 +112,13 @@ def main():
                 index_statistic.append(step)
 
             loss_sum = 0
-            """""# adjust learning rate
+            x=0
+            # adjust learning rate
             if step in [750, 950]:
                 for opt in optimizer.param_groups:
                     if 'new' in opt['key']:
-                        opt['lr'] *= 0.1"""
+                        x += 1
+                        #opt['lr'] *= 0.1   #0.1
 
             if step % 25 == 0:
                 torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
@@ -131,7 +133,7 @@ def main():
 
     plt.plot(index_statistic, averaged_loss_statistic)
     plt.ylabel('averaged loss')
-    plt.savefig(os.path.join(path_indata, "averaged loss.png"))
+    plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
 
 
 if __name__ == '__main__':

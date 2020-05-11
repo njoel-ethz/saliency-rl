@@ -27,7 +27,7 @@ class DHF1KDataset(Dataset):
         path_clip = os.path.join(self.path_data, 'video', file_name)
         path_annt = os.path.join(self.path_data, 'annotation', file_name, 'maps')
 
-        start_idx = np.random.randint(0, self.list_num_frame[idx]-self.len_snippet+1)
+        start_idx = np.random.randint(1, self.list_num_frame[idx]-self.len_snippet+1) #(0, ..) to keep 1st frame
 
         v = np.random.random()
         clip = []

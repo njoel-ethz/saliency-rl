@@ -126,11 +126,12 @@ def create_gaussian_map(positions):
         if (y_temp >= 210): y_temp = 209
             #print("overflow y :" + str(y_temp - 210))
         if (y_temp < 0): y_temp = 0
-        cv2.circle(img, (x_temp, y_temp), 12, (255, 255, 255), -1)
+
+        cv2.circle(img, (x_temp, y_temp), 15, (255, 255, 255), -1)
         #print(str(x[i]) + ", " + str(y[i]))
-    blurred_img = cv2.cvtColor(cv2.GaussianBlur(img, (69, 69), 0), cv2.COLOR_BGR2GRAY)
+    blurred_img = cv2.cvtColor(cv2.GaussianBlur(img, (45, 45), 0), cv2.COLOR_BGR2GRAY)
     return blurred_img
-    #TODO: read in the x and y values, write pixels and do gaussian blurr, check for size of original picture
+    #TODO: check for size of original picture, correct interpolation
 
 def interpolate_null_values(full_data, null_values, path_annt, num_frame):
     for id in null_values:
