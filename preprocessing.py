@@ -164,39 +164,48 @@ def interpolate_null_values(full_data, null_values, path_annt, num_frame):
 
         cv2.imwrite(os.path.join(path_annt, '%06d.png' % id), new_map)
 
-# from gist.github.com/keithweaver/70df4922fec74ea87405b83840b45d57
-def split_video_to_frames(old_path, file_name):
+# adaption from gist.github.com/keithweaver/70df4922fec74ea87405b83840b45d57
+def split_video_to_frames(path_indata):
     FPS = 25
+    path_video = os.path.join(path_indata, 'video')
+    for file in os.listdir(path_video):
+        if file.endswith("AVI"):
+            index = int(file.split('.')[0])
+            new_path = os.path.join(path_video, '%04d'%(index))
+            # Playing video from file: 384, 224
+            cap = cv2.VideoCapture(os.path.join(path_video, file))
+            cap.set(cv2.CAP_PROP_FPS, FPS)
 
-    # Playing video from file: 384, 224
-    cap = cv2.VideoCapture(os.path.join(old_path, file_name + '.mp4'))
-    cap.set(cv2.CAP_PROP_FPS, FPS)
+            try:
+                if not os.path.exists(new_path):
+                    os.makedirs(new_path)
+            except OSError:
+                print('Error: Creating directory of data')
 
-    new_path = os.path.join(old_path, file_name)
-    try:
-        if not os.path.exists(new_path):
-            os.makedirs(new_path)
-    except OSError:
-        print('Error: Creating directory of data')
+            currentFrame = 0
+            while (True):
+                # Capture frame-by-frame
+                success, frame = cap.read()
+                if not success: break
+                # Saves image of the current frame in jpg file
+                file_name = '%06d.png' % (currentFrame + 1)
+                name = os.path.join(new_path, file_name)
+                # print ('Creating... ' + name)
+                frame = cv2.resize(frame, (384, 224))
+                cv2.imwrite(name, frame)
+                currentFrame += 1
 
-    currentFrame = 0
-    while (True):
-        # Capture frame-by-frame
-        success, frame = cap.read()
-        if not success: break
-        # Saves image of the current frame in jpg file
-        file_name = '%06d.png' % (currentFrame + 1)
-        name = os.path.join(new_path, file_name)
-        # print ('Creating... ' + name)
-        frame = cv2.resize(frame, (384, 224))
-        cv2.imwrite(name, frame)
-        currentFrame += 1
+            # When everything done, release the capture
+            cap.release()
+            cv2.destroyAllWindows()
 
-    # When everything done, release the capture
-    cap.release()
-    cv2.destroyAllWindows()
+            #rename files to %06d
+            path_annt = os.path.join(path_indata, 'annotation', '%04d'%(index), 'maps')
+            for frame in os.listdir(path_annt):
+                os.rename(os.path.join(path_annt, frame), os.path.join(path_annt, '%06d' %int(frame.split('.')[0]) + '.png'))
+            print('splitted: ' + str(index))
 
-    return new_path
+    return 0
 
 
 def main():
@@ -211,13 +220,12 @@ def main():
         answered = True
         if answer in yes:
             atari_reader('Atari_dataset')
-    #answered = False
+    answered = False
     while not answered:
         answer = input("Split frames of DHF1K data? (y/n) ").lower()
         answered = True
         if answer in yes:
-            #split_video_to_frames()
-            break
+            split_video_to_frames('DHF1K_dataset')
 
 
 

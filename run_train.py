@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = 'Atari_dataset'
+    path_indata = 'DHF1K_dataset' #'Atari_dataset'
     path_output = 'output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
@@ -27,7 +27,7 @@ def main():
     batch_size = 1
     num_iters = 1000
     len_temporal = 32
-    file_weight = 'TASED_updated.pt'
+    file_weight = 'S3D_kinetics400.pt'#'TASED_updated.pt'
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -72,9 +72,9 @@ def main():
         if 'convtsp' in key:
             params += [{'params':[value], 'key':key+'(new)'}]
         else:
-            params += [{'params':[value], 'lr':0.01, 'key':key}] #0.001
+            params += [{'params':[value], 'lr':0.001, 'key':key}] #0.001
 
-    optimizer = torch.optim.SGD(params, lr=0.3, momentum=0.9, weight_decay=2e-7) #lr = 0.1
+    optimizer = torch.optim.SGD(params, lr=0.1, momentum=0.9, weight_decay=2e-7) #lr = 0.1
     criterion = KLDLoss()
 
     model = model.cuda()
@@ -82,7 +82,7 @@ def main():
     torch.backends.cudnn.benchmark = False
     model.train()
 
-    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=8)
+    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=0)
 
     loss_statistic = []
     averaged_loss_statistic = []
@@ -107,6 +107,16 @@ def main():
             print ('iteration: [%4d/%4d], loss: %.4f, %s' % (step, num_iters, loss_sum/pile, timedelta(seconds=int(time.time()-start_time))), flush=True)
 
             loss_statistic.append(loss_sum/pile)
+
+            plt.ylabel('Loss')
+            plt.xlabel(path_indata + ', weights: ' + file_weight + ', lr = tased')
+            plt.plot(loss_statistic, color='b')
+            if step==1:
+                plt.show(block=False)
+            else:
+                plt.draw()
+            plt.pause(0.00001)
+
             if step%10==0:
                 averaged_loss_statistic.append(sum(loss_statistic[step-10:step])/10)
                 index_statistic.append(step)
@@ -122,15 +132,14 @@ def main():
                 torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
 
         i += 1
-    torch.save(model.state_dict(), os.path.join(path_indata, 'Atari_weight_file'))
+    torch.save(model.state_dict(), os.path.join(path_indata, 'DHF1K_weight_file.pt'))#'Atari_weight_file.pt'))
 
     print('plotten')
-    plt.plot(loss_statistic)
-    plt.ylabel('loss')
+    #plt.plot(loss_statistic)
     plt.savefig(os.path.join(path_indata, "loss.png"))
 
     plt.plot(index_statistic, averaged_loss_statistic)
-    plt.ylabel('averaged loss')
+    plt.ylabel('Averaged loss: ' + path_indata + ', weights: ' + file_weight + ', lr = tased')
     plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
 
 

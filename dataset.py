@@ -17,7 +17,7 @@ class DHF1KDataset(Dataset):
     def __init__(self, path_data, len_snippet):
          self.path_data = path_data
          self.len_snippet = len_snippet
-         self.list_num_frame = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
+         self.list_num_frame = [int(row[0]) for row in csv.reader(open('DHF1K_num_frame_train.csv', 'r'))] #'Atari_num_frame_train.csv', 'r'))]
 
     def __len__(self):
         return len(self.list_num_frame)
