@@ -4,13 +4,16 @@ import cv2
 import numpy as np
 import os
 import torch
+from scipy.ndimage import gaussian_filter
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import tarfile
 import zipfile
 import shutil
+import imghdr
+from PIL import Image
 
-def main():
+def main_1():
     ''' preprocessing of input data '''
     # split into frames if needed
     # read in atari data and save accordingly
@@ -38,7 +41,36 @@ def main():
     if not cv2.imwrite("Atari_dataset/annotation/test.png", blurred_img):
         print("could not write image!")
 
+def main():
+    img_1 = np.zeros((210, 160, 3), np.uint8)
+    cv2.circle(img_1, (80, 105), 15, (255, 255, 255), -1)
+    blurred_img = cv2.cvtColor(cv2.GaussianBlur(img_1, (51, 51), 0), cv2.COLOR_BGR2GRAY)
+    cv2.imshow('my filter', blurred_img)
+    cv2.waitKey(1000)
+    cv2.destroyAllWindows()
 
+
+    blurred_img = gaussian_filter(img_1, sigma=7)
+    blurred_img[:,:,0] = 0
+    blurred_img[:,:,1] = 0
+    print(blurred_img.shape)
+    video_img = cv2.resize(cv2.imread(os.path.join('Atari_dataset', 'video', '0001', '000001.png'), cv2.IMREAD_COLOR), (160,210))
+    video_img = Image.fromarray(video_img)
+    print(video_img)
+    red_img = Image.new('RGB', (160, 210), (255, 0, 0))
+    mask = cv2.resize(cv2.imread(os.path.join('Atari_dataset', 'annotation', '0001', 'maps', '000001.png'), cv2.IMREAD_GRAYSCALE), (160,210))
+    mask = Image.fromarray(mask)
+    video_img.paste(red_img, mask=mask)
+
+    video_img.show()
+    cv2.waitKey(5000)
+    cv2.destroyAllWindows()
+
+    #dtype = uint8
+    img_1 = img_1.shape
+    img_2 = cv2.imread(os.path.join('DHF1K_dataset', 'annotation', '0001', 'maps', '000001.png'), cv2.IMREAD_COLOR)[0,0]
+    print(img_1)
+    print(img_2)
 
 if __name__ == '__main__':
     main()

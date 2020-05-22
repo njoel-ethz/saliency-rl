@@ -10,11 +10,13 @@ from loss import KLDLoss
 from dataset import DHF1KDataset, InfiniteDataLoader
 from itertools import islice
 import matplotlib.pyplot as plt
+from PIL import Image
+from scipy.ndimage import gaussian_filter
 
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
-    path_indata = 'DHF1K_dataset' #'Atari_dataset'
+    path_indata = 'Atari_dataset'
     path_output = 'output'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
@@ -27,7 +29,7 @@ def main():
     batch_size = 1
     num_iters = 1000
     len_temporal = 32
-    file_weight = 'S3D_kinetics400.pt'#'TASED_updated.pt'
+    file_weight = 'TASED_updated.pt'
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
@@ -74,7 +76,8 @@ def main():
         else:
             params += [{'params':[value], 'lr':0.001, 'key':key}] #0.001
 
-    optimizer = torch.optim.SGD(params, lr=0.1, momentum=0.9, weight_decay=2e-7) #lr = 0.1
+    optimizer = torch.optim.SGD(params, lr=0.01, momentum=0.9, weight_decay=2e-7) #lr = 0.1
+    lr_adaption = 0.1
     criterion = KLDLoss()
 
     model = model.cuda()
@@ -82,7 +85,7 @@ def main():
     torch.backends.cudnn.benchmark = False
     model.train()
 
-    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=0)
+    train_loader = InfiniteDataLoader(DHF1KDataset(path_indata, len_temporal), batch_size=batch_size, shuffle=True, num_workers=0) #was 24, 0 means that data is loaded in the main process
 
     loss_statistic = []
     averaged_loss_statistic = []
@@ -91,7 +94,7 @@ def main():
     i, step = 0, 0
     loss_sum = 0
     start_time = time.time()
-    for clip, annt in islice(train_loader, num_iters*pile):
+    for clip, annt, (file_name, picture_name) in islice(train_loader, num_iters*pile):
         with torch.set_grad_enabled(True):
             output = model(clip.cuda())
             loss = criterion(output, annt.cuda())
@@ -108,6 +111,7 @@ def main():
 
             loss_statistic.append(loss_sum/pile)
 
+            visualize(output, path_indata, file_name[0], picture_name[0], step)
             plt.ylabel('Loss')
             plt.xlabel(path_indata + ', weights: ' + file_weight + ', lr = tased')
             plt.plot(loss_statistic, color='b')
@@ -126,22 +130,54 @@ def main():
             if step in [750, 950]:
                 for opt in optimizer.param_groups:
                     if 'new' in opt['key']:
-                        opt['lr'] *= 0.1   #0.1
+                        opt['lr'] *= lr_adaption   #0.1
 
             if step % 25 == 0:
-                torch.save(model.state_dict(), os.path.join(path_output, 'iter_%04d.pt' % step))
+                try:
+                    if not os.path.exists(os.path.join(path_output, 'weights')):
+                        os.makedirs(os.path.join(path_output, 'weights'))
+                except OSError:
+                    print('Error: Creating directory of data')
+                torch.save(model.state_dict(), os.path.join(path_output, 'weights', 'iter_%04d.pt' % step))
 
         i += 1
-    torch.save(model.state_dict(), os.path.join(path_indata, 'DHF1K_weight_file.pt'))#'Atari_weight_file.pt'))
+    torch.save(model.state_dict(), os.path.join(path_indata, 'produced_weight_file.pt'))
 
     print('plotten')
     #plt.plot(loss_statistic)
     plt.savefig(os.path.join(path_indata, "loss.png"))
 
-    plt.plot(index_statistic, averaged_loss_statistic)
+    plt.plot(index_statistic, averaged_loss_statistic, color='r')
     plt.ylabel('Averaged loss: ' + path_indata + ', weights: ' + file_weight + ', lr = tased')
     plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
 
+def visualize(output, path_indata, file_name, picture_name, step):
+    # print(output.shape)  ---> torch.Size([1, 224, 384])
+    # print(output.cpu().data.numpy())
+    np_array = (output.cpu().data[0].numpy()*255.).astype(np.int)/255.
+    # print(np_array.shape)    ---> (224, 384)
+    np_array = gaussian_filter(np_array, sigma=7)
+    np_array = (np_array/np.max(np_array)*255.).astype(np.uint8)
+    mask = Image.fromarray(np_array)  # gives a 384x224 Image object
+    path_to_clip = os.path.join(path_indata, 'video', file_name, picture_name)
+    video_img = cv2.resize(cv2.imread(path_to_clip, cv2.IMREAD_COLOR), (384, 224))
+    video_img = Image.fromarray(video_img)
+    red_img = Image.new('RGB', (384, 224), (0, 0, 255))
+    video_img.paste(red_img, mask=mask)
+
+    open_cv_image = cv2.resize(np.array(video_img), (160, 210))
+
+    output_path = os.path.join(path_indata, 'training_visualized')
+    try:
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+    except OSError:
+        print('Error: Creating directory of data')
+    cv2.imwrite(os.path.join(output_path, '%06d.png' % (step)), open_cv_image)
+    """cv2.imshow('step', open_cv_image)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()"""
+    return 0
 
 if __name__ == '__main__':
     main()

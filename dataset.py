@@ -17,7 +17,10 @@ class DHF1KDataset(Dataset):
     def __init__(self, path_data, len_snippet):
          self.path_data = path_data
          self.len_snippet = len_snippet
-         self.list_num_frame = [int(row[0]) for row in csv.reader(open('DHF1K_num_frame_train.csv', 'r'))] #'Atari_num_frame_train.csv', 'r'))]
+         if (path_data == 'DHF1K_dataset'):
+             self.list_num_frame = [int(row[0]) for row in csv.reader(open('DHF1K_num_frame_train.csv', 'r'))]#'Atari_num_frame_train.csv', 'r'))]
+         else:
+             self.list_num_frame = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
 
     def __len__(self):
         return len(self.list_num_frame)
@@ -44,7 +47,7 @@ class DHF1KDataset(Dataset):
         if v < 0.5:
             annt = annt[:, ::-1]
 
-        return transform(clip), torch.from_numpy(annt.copy()).contiguous().float()
+        return transform(clip), torch.from_numpy(annt.copy()).contiguous().float(), (file_name, '%06d.png'%(start_idx+self.len_snippet))
 
 # from gist.github.com/MFreidank/821cc87b012c53fade03b0c7aba13958
 class InfiniteDataLoader(DataLoader):

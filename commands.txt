@@ -14,6 +14,7 @@ scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/averaged_los
 
 Devices:
 watch -n 1 nvidia-smi
+kill -9 "PIDhere"
 
 Run:
 export CUDA_VISIBLE_DEVICES=0,1 && python run_train.py

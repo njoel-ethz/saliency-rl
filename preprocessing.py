@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import os
 import torch
+from scipy.ndimage import gaussian_filter
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import tarfile
@@ -41,8 +42,6 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
 
                     # renaming videos
                     counter += 1
-                    print('-- -- '+str(counter)+' -- --')
-                    print(game_file.split('.')[0])
                     temp = os.path.join(video, game_file[:-8])
                     sample_path = os.path.join(video, '%04d' % counter)
                     if os.path.isdir(sample_path):
@@ -53,6 +52,8 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         shutil.rmtree(os.path.join(annotation,'%04d' % counter)) #ignore_errors=True
                     os.makedirs(os.path.join(annotation,'%04d' % counter))
                     os.makedirs(path_annt)
+                    print('-- -- ' + str(counter) + ' -- --')
+                    print(game_file.split('.')[0])
 
                     for frame in os.listdir(sample_path):
                         seq_number = frame.split('_')[2]
@@ -72,6 +73,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                     full_data.pop(0)  # frame_id,episode_id,score,duration(ms),unclipped_reward,action,gaze_positions
 
                     frame_id = 0
+                    null_values = 0
                     prev_gaze_positions = []
                     #null_values = []
                     for line in full_data:
@@ -94,9 +96,10 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                                 print("Error: could not interpolate " + str(frame_id), flush=True)
                                 return
                             saliency_map = create_gaussian_map(prev_gaze_positions)
+                            null_values += 1
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
                             print("could not write image!", flush=True)
-                    print(frame_id)
+                    print(str(frame_id) + ', null values: ' + str(null_values))
                     number_of_frames.append(frame_id)
 
                     #interpolate null values
@@ -116,7 +119,7 @@ def create_gaussian_map(positions):
     y = (y.astype(np.float)).astype(np.int)
     if len(x) != len(y):
         print("Error: Length of x and y vary")
-    img = np.zeros((210, 160, 3), np.uint8)
+    img = np.zeros((210, 160, 3), np.uint8)   #(160, 210) but np inverts
     for i in range(len(x)):
         x_temp = x[i]
         y_temp = y[i]
@@ -126,10 +129,16 @@ def create_gaussian_map(positions):
         if (y_temp >= 210): y_temp = 209
             #print("overflow y :" + str(y_temp - 210))
         if (y_temp < 0): y_temp = 0
+        """repeated = 0
+        if img[y_temp, x_temp, 0] > 1:
+            repeated = 4"""
+        cv2.circle(img, (x_temp, y_temp), 8, (255, 255, 255), -1)
 
-        cv2.circle(img, (x_temp, y_temp), 15, (255, 255, 255), -1)
         #print(str(x[i]) + ", " + str(y[i]))
-    blurred_img = cv2.cvtColor(cv2.GaussianBlur(img, (45, 45), 0), cv2.COLOR_BGR2GRAY)
+    #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    blurred_img = gaussian_filter(img, sigma=3) #sigma=7, higher = more blurr
+    blurred_img2 = gaussian_filter(img, sigma=10)
+    blurred_img = cv2.addWeighted(blurred_img,0.2, blurred_img2, 1.5, 0)
     return blurred_img
     #TODO: check for size of original picture, correct interpolation
 

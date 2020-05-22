@@ -25,7 +25,7 @@ class VideoStream:
 
         sct_img = self.sct.grab(self.monitor)
         self.frame = cv2.cvtColor(np.array(sct_img), cv2.COLOR_RGB2BGR)
-
+        #print(self.frame.shape)
         # cv2.imshow('test', self.frame)
         #
         # while True:
@@ -57,7 +57,7 @@ class VideoStream:
 class OnlineDetector:
     def __init__(self):
         self.len_temporal = 32
-        self.file_weight = './TASED_updated.pt'
+        self.file_weight = os.path.join('Atari_dataset', 'weights_trained_on_3000.pt')#'TASED_updated.pt'
 
         self.current_saliency_map = None
         self.images = []
@@ -102,6 +102,7 @@ class OnlineDetector:
             images_resized = []
 
             for frame in self.images:
+                print(frame.shape)
                 img = cv2.resize(frame, (384, 224))
                 images_resized.append(img)
 
@@ -152,7 +153,7 @@ class OnlineDetector:
             # num_frames = num_frames + 1
 
             if not self.is_calculating:
-                print(len(self.images))
+                #print(len(self.images))
                 self.images.append(frame)
                 self.images.append(frame)
 
