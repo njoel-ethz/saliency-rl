@@ -124,8 +124,6 @@ def produce_frames(weights, method_used, path_indata):
         print ('processing ' + dname)
         list_frames = [f for f in os.listdir(os.path.join(path_indata, dname)) if os.path.isfile(os.path.join(path_indata, dname, f))]
         list_frames.sort()
-        if len(list_frames)>480: #10 seconds videos
-            list_frames = list_frames[240:480]
 
         # process in a sliding window fashion
         if len(list_frames) >= 2*len_temporal-1:
@@ -156,6 +154,10 @@ def produce_frames(weights, method_used, path_indata):
 
         list_maps = [f for f in os.listdir(os.path.join(path_output, dname)) if os.path.isfile(os.path.join(path_output, dname, f))]
         list_maps.sort()
+        if len(list_maps)>480: #10 seconds videos
+            list_maps = list_maps[240:480]
+        if len(list_frames)>480: #10 seconds videos
+            list_frames = list_frames[240:480]
         video_array = []
         for i in range (len(list_maps)):
             temp_frame = Image.fromarray(cv2.imread(os.path.join(path_indata, dname, list_frames[i]), cv2.IMREAD_COLOR))
@@ -188,7 +190,7 @@ def process(model, clip, path_outdata, idx):
     smap = (smap.numpy()*255.).astype(np.int)/255.
     smap = gaussian_filter(smap, sigma=7)
     smap = cv2.resize(smap, (160, 210))
-    cv2.imwrite(os.path.join(path_outdata, '%04d.png'%(idx+1)), (smap/np.max(smap)*255.).astype(np.uint8))
+    cv2.imwrite(os.path.join(path_outdata, '%06d.png'%(idx+1)), (smap/np.max(smap)*255.).astype(np.uint8))
 
 
 if __name__ == '__main__':

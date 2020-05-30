@@ -48,10 +48,12 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         shutil.rmtree(sample_path)
                     os.rename(temp, sample_path)
                     path_annt = os.path.join(annotation, '%04d' % counter, 'maps')
+                    path_annt_discrete = os.path.join(annotation, '%04d' % counter, 'discrete')
                     if os.path.isdir(os.path.join(annotation,'%04d' % counter)):
                         shutil.rmtree(os.path.join(annotation,'%04d' % counter)) #ignore_errors=True
                     os.makedirs(os.path.join(annotation,'%04d' % counter))
                     os.makedirs(path_annt)
+                    os.makedirs(path_annt_discrete)
                     print('-- -- ' + str(counter) + ' -- --')
                     print(game_file.split('.')[0])
 
@@ -87,7 +89,7 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         gaze_positions = line[6:]
                         if gaze_positions[0]!= 'null':
                             prev_gaze_positions = gaze_positions
-                            saliency_map = create_gaussian_map(gaze_positions)
+                            saliency_map, saliency_map_discrete = create_gaussian_map(gaze_positions)
                         else:
                             #if positions is Null
                             #empty_img = np.zeros((210, 160, 3), np.uint8)
@@ -95,9 +97,11 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                             if len(prev_gaze_positions)==0:
                                 print("Error: could not interpolate " + str(frame_id), flush=True)
                                 return
-                            saliency_map = create_gaussian_map(prev_gaze_positions)
+                            saliency_map, saliency_map_discrete = create_gaussian_map(prev_gaze_positions)
                             null_values += 1
                         if not cv2.imwrite(os.path.join(path_annt, '%06d.png' %(frame_id)), saliency_map):
+                            print("could not write image!", flush=True)
+                        if not cv2.imwrite(os.path.join(path_annt_discrete, '%06d.png' %(frame_id)), saliency_map_discrete):
                             print("could not write image!", flush=True)
                     print(str(frame_id) + ', null values: ' + str(null_values))
                     number_of_frames.append(frame_id)
@@ -120,6 +124,7 @@ def create_gaussian_map(positions):
     if len(x) != len(y):
         print("Error: Length of x and y vary")
     img = np.zeros((210, 160, 3), np.uint8)   #(160, 210) but np inverts
+    img_discrete = np.zeros((210, 160), np.uint8)
     for i in range(len(x)):
         x_temp = x[i]
         y_temp = y[i]
@@ -133,13 +138,14 @@ def create_gaussian_map(positions):
         if img[y_temp, x_temp, 0] > 1:
             repeated = 4"""
         cv2.circle(img, (x_temp, y_temp), 8, (255, 255, 255), -1)
+        img_discrete[y_temp, x_temp] = 1
 
         #print(str(x[i]) + ", " + str(y[i]))
     #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     blurred_img = gaussian_filter(img, sigma=3) #sigma=7, higher = more blurr
     blurred_img2 = gaussian_filter(img, sigma=10)
     blurred_img = cv2.addWeighted(blurred_img,0.2, blurred_img2, 1.5, 0)
-    return blurred_img
+    return blurred_img, img_discrete
     #TODO: check for size of original picture, correct interpolation
 
 def interpolate_null_values(full_data, null_values, path_annt, num_frame):
