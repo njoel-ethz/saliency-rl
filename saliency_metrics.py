@@ -3,29 +3,53 @@
 import numpy as np
 import os
 import cv2
+import random
+import csv
 
-#first run run_visualize.py to produce saliency maps with finetuned weights
+#first run create_maps.py to produce saliency maps with finetuned weights
 def main():
+    num_iters = 1000
+
     path_annt = os.path.join('Atari_dataset', 'annotation')
-    path_gt = os.path.join(path_annt, '0001', 'discrete')
-    path_tuned_smap = os.path.join('output', 'finetuned', '0001')
-    path_original_smap = os.path.join('output', 'TASED_original', '0001')
-    list_frames = [d for d in os.listdir(path_original_smap) if os.path.isfile(os.path.join(path_tuned_smap, d))]
-    list_frames.sort()
+    path_tuned_smap = os.path.join('output', 'finetuned')
+    path_original_smap = os.path.join('output', 'TASED_original')
 
     judd_tuned = []
     judd_original = []
-    for i in range(len(list_frames)):
-        gt_frame = cv2.imread(os.path.join(path_gt, list_frames[i]), cv2.IMREAD_GRAYSCALE)
-        smap_frame = cv2.imread(os.path.join(path_tuned_smap, list_frames[i]), cv2.IMREAD_GRAYSCALE)
-        judd_tuned.append(auc_judd(smap_frame, gt_frame))
-        smap_frame = cv2.imread(os.path.join(path_original_smap, list_frames[i]), cv2.IMREAD_GRAYSCALE)
-        judd_original.append(auc_judd(smap_frame, gt_frame))
+    shuff_tuned = []
+    shuff_original = []
 
-    average_tuned = sum(judd_tuned)/len(judd_tuned)
-    average_original = sum(judd_original)/len(judd_original)
-    print('original: ' + str(average_original))
-    print('tuned: ' + str(average_tuned))
+    length_array = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
+
+    for i in range(num_iters):
+        file, frame_number = get_random_sample(length_array)
+        gt = cv2.imread(os.path.join(path_annt, '%04d'%(file), 'discrete', '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        tuned_smap = cv2.imread(os.path.join(path_tuned_smap, '%04d'%(file), '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        original_smap = cv2.imread(os.path.join(path_original_smap, '%04d'%(file), '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        file, frame_number = get_random_sample(length_array)
+        other_smap = cv2.imread(os.path.join(path_tuned_smap, '%04d'%(file), '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        other_original_smap = cv2.imread(os.path.join(path_original_smap, '%04d'%(file), '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        judd_tuned.append(auc_judd(tuned_smap, gt))
+        judd_original.append(auc_judd(original_smap, gt))
+        shuff_tuned.append(auc_shuff_acl(tuned_smap, gt, other_smap))
+        shuff_original.append((auc_shuff_acl(original_smap, gt, other_original_smap)))
+
+    judd_average_tuned = sum(judd_tuned)/len(judd_tuned)
+    judd_average_original = sum(judd_original)/len(judd_original)
+    shuff_average_tuned = sum(shuff_tuned)/len(shuff_tuned)
+    shuff_average_original = sum(shuff_original)/len(shuff_original)
+    print('original (AUC_Judd, AUC_shuff): ' + str((judd_average_original, shuff_average_original)))
+    print('tuned (AUC_Judd, AUC_shuff): ' + str((judd_average_tuned, shuff_average_tuned)))
+
+def get_random_sample(length_array):
+    frame = random.randint(0, sum(length_array))
+    file = 0
+    while frame > length_array[file]:
+        frame -= length_array[file]
+        file += 1
+    file += 1
+    frame += 1
+    return file, frame
 
 def normalize_map(s_map):
     # normalize the salience map (as done in MIT code)

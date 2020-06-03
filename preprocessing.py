@@ -103,10 +103,10 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                             print("could not write image!", flush=True)
                         if not cv2.imwrite(os.path.join(path_annt_discrete, '%06d.png' %(frame_id)), saliency_map_discrete):
                             print("could not write image!", flush=True)
-                    print(str(frame_id) + ', null values: ' + str(null_values))
+                    print('total: ' + str(frame_id) + ', null values: ' + str(null_values))
                     number_of_frames.append(frame_id)
 
-                    #interpolate null values
+                    #TODO: interpolate null values
                     #interpolate_null_values(full_data, null_values, path_annt, frame_id)
     print(number_of_frames)
     if os.path.isfile(num_frame_path):
