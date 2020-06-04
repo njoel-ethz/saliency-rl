@@ -20,6 +20,7 @@ def main():
     shuff_original = []
 
     length_array = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
+    length_array = length_array[0:18]
 
     for i in range(num_iters):
         file, frame_number = get_random_sample(length_array)
