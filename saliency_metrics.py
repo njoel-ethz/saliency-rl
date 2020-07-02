@@ -14,10 +14,13 @@ def main():
     path_tuned_smap = os.path.join('output', 'finetuned')
     path_original_smap = os.path.join('output', 'TASED_original')
 
-    judd_tuned = []
-    judd_original = []
-    shuff_tuned = []
-    shuff_original = []
+    scores = {}
+    scores['judd_t'] = []
+    scores['judd'] = []
+    scores['shuff_t'] = []
+    scores['shuff'] = []
+    scores['sim_t'] = []
+    scores['sim'] = []
 
     length_array = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
     length_array = length_array[0:18]
@@ -30,17 +33,21 @@ def main():
         file, frame_number = get_random_sample(length_array)
         other_smap = cv2.imread(os.path.join(path_tuned_smap, '%04d'%(file), '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
         other_original_smap = cv2.imread(os.path.join(path_original_smap, '%04d'%(file), '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
-        judd_tuned.append(auc_judd(tuned_smap, gt))
-        judd_original.append(auc_judd(original_smap, gt))
-        shuff_tuned.append(auc_shuff_acl(tuned_smap, gt, other_smap))
-        shuff_original.append((auc_shuff_acl(original_smap, gt, other_original_smap)))
+        scores['judd_t'].append(auc_judd(tuned_smap, gt))
+        scores['judd'].append(auc_judd(original_smap, gt))
+        scores['shuff_t'].append(auc_shuff_acl(tuned_smap, gt, other_smap))
+        scores['shuff'].append((auc_shuff_acl(original_smap, gt, other_original_smap)))
+        scores['sim_t'].append(similarity(tuned_smap, gt))
+        scores['sim'].append(similarity(original_smap, gt))
 
-    judd_average_tuned = sum(judd_tuned)/len(judd_tuned)
-    judd_average_original = sum(judd_original)/len(judd_original)
-    shuff_average_tuned = sum(shuff_tuned)/len(shuff_tuned)
-    shuff_average_original = sum(shuff_original)/len(shuff_original)
-    print('original (AUC_Judd, AUC_shuff): ' + str((judd_average_original, shuff_average_original)))
-    print('tuned (AUC_Judd, AUC_shuff): ' + str((judd_average_tuned, shuff_average_tuned)))
+    judd_average_tuned = sum(scores['judd_t'])/len(scores['judd_t'])
+    judd_average_original = sum(scores['judd'])/len(scores['judd'])
+    shuff_average_tuned = sum(scores['shuff_t'])/len(scores['shuff_t'])
+    shuff_average_original = sum(scores['shuff'])/len(scores['shuff'])
+    sim_average_tuned = sum(scores['sim_t']) / len(scores['sim_t'])
+    sim_average_original = sum(scores['sim']) / len(scores['sim'])
+    print('original (AUC_Judd, AUC_shuff, similarity): ' + str((judd_average_original, shuff_average_original, sim_average_original)))
+    print('tuned (AUC_Judd, AUC_shuff, similarity): ' + str((judd_average_tuned, shuff_average_tuned, sim_average_tuned)))
 
 def get_random_sample(length_array):
     frame = random.randint(0, sum(length_array))

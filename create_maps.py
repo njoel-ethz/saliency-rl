@@ -192,6 +192,7 @@ def process(model, clip, path_outdata, idx):
     smap = cv2.resize(smap, (160, 210))
     cv2.imwrite(os.path.join(path_outdata, '%06d.png'%(idx+1)), (smap/np.max(smap)*255.).astype(np.uint8))
 
+    return (smap/np.max(smap)*255.).astype(np.uint8)
 
 if __name__ == '__main__':
     main()
