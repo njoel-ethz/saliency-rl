@@ -6,6 +6,7 @@ import torch
 from model import TASED_v2
 from scipy.ndimage.filters import gaussian_filter
 from PIL import Image, ImageDraw, ImageFont
+from tqdm import tqdm
 
 def main():
     path_output = os.path.join('output', 'comparison')
@@ -62,7 +63,7 @@ def produce_gt(method_used, path_indata):
         if len(list_maps) > 480:  # 10 seconds videos
             list_maps = list_maps[240:480]
         video_array = []
-        for i in range(len(list_maps)):
+        for i in tqdm(range(len(list_maps))):
             temp_frame = Image.fromarray(cv2.imread(os.path.join(path_indata, dname, list_frames[i]), cv2.IMREAD_COLOR))
             temp_map = Image.fromarray(cv2.imread(os.path.join(path_annt, dname, 'maps', list_maps[i]), cv2.IMREAD_GRAYSCALE))
             red_img = Image.new('RGB', (160, 210), (0, 0, 255))
@@ -152,6 +153,7 @@ def produce_frames(weights, method_used, path_indata):
         else:
             print (' more frames are needed')
 
+        """Produce video for qualitative analysis of produced saliency maps"""
         list_maps = [f for f in os.listdir(os.path.join(path_output, dname)) if os.path.isfile(os.path.join(path_output, dname, f))]
         list_maps.sort()
         if len(list_maps)>480: #10 seconds videos
