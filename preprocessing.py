@@ -25,8 +25,6 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
     num_frame_path = 'Atari_num_frame_train.csv'
     num_frame_path_testing = 'Atari_num_frame_testing.csv'
 
-
-    # unzip
     if not os.path.exists(os.path.join(path_indata, 'annotation')):
         os.makedirs(os.path.join(path_indata, 'annotation'))
     if not os.path.exists(annotation_training):
@@ -35,12 +33,25 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
         os.makedirs(annotation_testing)
 
     for file in os.listdir(path_indata):
+        # unzip
         if file.endswith("zip"):
             current_path = os.path.join(path_indata, file)
             game_path = current_path[:-4] #without .zip
             print(game_path)
-            with zipfile.ZipFile(current_path, 'r') as zip_ref:
-                zip_ref.extractall(path_indata)
+            if not os.path.isdir(game_path):
+                with zipfile.ZipFile(current_path, 'r') as zip_ref:
+                    zip_ref.extractall(path_indata)
+            else:
+                print('Already unzipped')
+
+            #moves highscore to normal data
+            if os.path.isdir(os.path.join(game_path, 'highscore')):
+                highscore_files = [d for d in os.listdir(os.path.join(game_path, 'highscore'))
+                                   if os.path.isfile(os.path.join(game_path, 'highscore', d))]
+                for f in highscore_files:
+                    shutil.copy(os.path.join(game_path, 'highscore', f), game_path)
+                shutil.rmtree(os.path.join(game_path, 'highscore'))
+
             for game_file in os.listdir(game_path):
                 # print("     "+game_file)
                 if game_file.endswith("tar.bz2"):
