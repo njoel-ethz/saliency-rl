@@ -10,7 +10,7 @@ import csv
 def main():
     num_iters = 1000
 
-    path_annt = os.path.join('Atari_dataset', 'annotation')
+    path_annt = os.path.join('Atari_dataset', 'annotation', 'testing')
     path_tuned_smap = os.path.join('output', 'finetuned')
     path_original_smap = os.path.join('output', 'TASED_original')
 
@@ -22,7 +22,7 @@ def main():
     scores['sim_t'] = []
     scores['sim'] = []
 
-    length_array = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
+    length_array = [int(row[0]) for row in csv.reader(open('Atari_num_frame_test.csv', 'r'))]
     length_array = length_array[0:18]
 
     for i in range(num_iters):

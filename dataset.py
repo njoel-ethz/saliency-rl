@@ -27,8 +27,8 @@ class DHF1KDataset(Dataset):
 
     def __getitem__(self, idx):
         file_name = '%04d'%(idx+1)
-        path_clip = os.path.join(self.path_data, 'video', file_name)
-        path_annt = os.path.join(self.path_data, 'annotation', file_name, 'maps')
+        path_clip = os.path.join(self.path_data, 'video', 'training', file_name)
+        path_annt = os.path.join(self.path_data, 'annotation', 'training', file_name, 'maps')
 
         start_idx = np.random.randint(1, self.list_num_frame[idx]-self.len_snippet+1) #(0, ..) to keep 1st frame
 

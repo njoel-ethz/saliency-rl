@@ -12,7 +12,7 @@ def main():
     path_output = os.path.join('output', 'comparison')
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
-    path_indata = os.path.join('Atari_dataset', 'video')
+    path_indata = os.path.join('Atari_dataset', 'video', 'testing')
     before_tuning = produce_frames('TASED_updated.pt', 'TASED_original', path_indata)
     after_tuning = produce_frames(os.path.join('Atari_dataset', 'produced_weight_file.pt'), 'finetuned', path_indata)
     ground_truth = produce_gt('ground_truth', path_indata)
@@ -46,7 +46,7 @@ def main():
 def produce_gt(method_used, path_indata):
     print('ground truth:')
     path_output = os.path.join('output', method_used)
-    path_annt = os.path.join('Atari_dataset', 'annotation')
+    path_annt = os.path.join('Atari_dataset', 'annotation', 'testing')
 
     list_indata = [d for d in os.listdir(path_indata) if os.path.isdir(os.path.join(path_indata, d))]
     list_indata.sort()
