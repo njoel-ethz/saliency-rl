@@ -7,7 +7,7 @@ Clone repo
 git fetch --all
 git reset origin/master    (git reset --hard)
 
-Files: Windows -> Linux Server
+Files: Windows <-> Linux Server
 scp C:\Users\joel\Documents\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset.zip
 unzip \*.zip
 scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/averaged_loss.png C:\Users\joel\Documents\saliency-rl\Atari_dataset\loss_server.png
