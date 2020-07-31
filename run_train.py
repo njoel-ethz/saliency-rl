@@ -159,7 +159,7 @@ def visualize(output, path_indata, file_name, picture_name, step):
     np_array = gaussian_filter(np_array, sigma=7)
     np_array = (np_array/np.max(np_array)*255.).astype(np.uint8)
     mask = Image.fromarray(np_array)  # gives a 384x224 Image object
-    path_to_clip = os.path.join(path_indata, 'video', file_name, picture_name)
+    path_to_clip = os.path.join(path_indata, 'video', 'training', file_name, picture_name)
     video_img = cv2.resize(cv2.imread(path_to_clip, cv2.IMREAD_COLOR), (384, 224))
     video_img = Image.fromarray(video_img)
     red_img = Image.new('RGB', (384, 224), (0, 0, 255))

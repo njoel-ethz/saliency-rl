@@ -11,6 +11,7 @@ Files: Windows <-> Linux Server
 scp C:\Users\joel\Documents\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset.zip
 unzip \*.zip
 scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/averaged_loss.png C:\Users\joel\Documents\saliency-rl\Atari_dataset\loss_server.png
+scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/produced_weight_file.pt C:\Users\joel\Documents\stable-baselines\saliency_weights\enduro_weights_3000.pt
 
 Devices:
 watch -n 1 nvidia-smi
@@ -18,6 +19,7 @@ kill -9 "PIDhere"
 
 Run:
 export CUDA_VISIBLE_DEVICES=0,1 && python run_train.py
+taskset -cp 0-11 "PIDhere"  (check cpu usage: 'htop' or 'sar -u 5' or 'taskset -cp "PIDhere"')
 
 Install from setup.py:
 python setup.py install
