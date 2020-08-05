@@ -15,8 +15,8 @@ from scipy.ndimage import gaussian_filter
 #import inference_controller
 
 def main():
-    weight_file = 'enduro_weights_1000.pt'
-    num_iters = 1000
+    weight_file = 'enduro_weights_1000.pt' #'produced_weight_file.pt' on Server
+    num_iters = 100
     calculate_shuff = True
     #save_inference_files = True
 

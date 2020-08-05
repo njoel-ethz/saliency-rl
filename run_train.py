@@ -12,12 +12,15 @@ from itertools import islice
 import matplotlib.pyplot as plt
 from PIL import Image
 from scipy.ndimage import gaussian_filter
+import csv
 
 def main():
     ''' concise script for training '''
     # optional two command-line arguments
     path_indata = 'Atari_dataset'
     path_output = 'output'
+    path_num_frame_full = 'Atari_num_frame_FullData.csv'
+    path_num_frame = 'Atari_num_frame_train.csv'
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
@@ -26,7 +29,7 @@ def main():
     # we checked that using only 2 gpus is enough to produce similar results
     num_gpu = 1
     pile = 5
-    batch_size = 1
+    batch_size = 1 #6 on Server
     num_iters = 1000
     len_temporal = 32
     file_weight = 'TASED_updated.pt'
@@ -34,6 +37,7 @@ def main():
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
 
+    split_train_test_set(path_num_frame_full, path_num_frame)
     model = TASED_v2()
 
     # load the weight file and copy the parameters
@@ -70,13 +74,15 @@ def main():
 
     # parameter setting for fine-tuning
     params = []
+    lr1 = 0.001
+    lr2 = 0.01
     for key, value in dict(model.named_parameters()).items():
         if 'convtsp' in key:
             params += [{'params':[value], 'key':key+'(new)'}]
         else:
-            params += [{'params':[value], 'lr':0.001, 'key':key}] #0.001
+            params += [{'params':[value], 'lr':lr1, 'key':key}] #0.001
 
-    optimizer = torch.optim.SGD(params, lr=0.01, momentum=0.9, weight_decay=2e-7) #lr = 0.1
+    optimizer = torch.optim.SGD(params, lr=lr2, momentum=0.9, weight_decay=2e-7) #lr = 0.1
     lr_adaption = 0.1
     criterion = KLDLoss()
 
@@ -113,7 +119,7 @@ def main():
 
             visualize(output, path_indata, file_name[0], picture_name[0], step)
             plt.ylabel('Loss')
-            plt.xlabel(path_indata + ', weights: ' + file_weight + ', lr = tased')
+            plt.xlabel(path_indata + ', weights: ' + file_weight + ', lr/optim = ' + str((lr1, lr2)))
             plt.plot(loss_statistic, color='b')
             if step==1:
                 plt.show(block=False)
@@ -148,8 +154,13 @@ def main():
     plt.savefig(os.path.join(path_indata, "loss.png"))
 
     plt.plot(index_statistic, averaged_loss_statistic, color='r')
-    plt.ylabel('Averaged loss: ' + path_indata + ', weights: ' + file_weight + ', lr = tased')
+    plt.ylabel('Averaged loss: ' + path_indata + ', weights: ' + file_weight + ', lr/optim = ' + str((lr1, lr2)))
     plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
+
+def split_train_test_set(path_full, path_train):
+    list_num_frame = [int(row[0]) for row in csv.reader(open(path_full, 'r'))]
+    
+    return 0
 
 def visualize(output, path_indata, file_name, picture_name, step):
     # print(output.shape)  ---> torch.Size([1, 224, 384])

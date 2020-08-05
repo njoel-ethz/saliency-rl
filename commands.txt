@@ -18,7 +18,7 @@ watch -n 1 nvidia-smi
 kill -9 "PIDhere"
 
 Run:
-export CUDA_VISIBLE_DEVICES=0,1 && python run_train.py
+export CUDA_VISIBLE_DEVICES=2,3 && python run_train.py
 taskset -cp 0-11 "PIDhere"  (check cpu usage: 'htop' or 'sar -u 5' or 'taskset -cp "PIDhere"')
 
 Install from setup.py:

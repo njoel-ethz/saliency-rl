@@ -14,80 +14,44 @@ import shutil
 
 def atari_reader(path_indata):  # called if some flag (flagfile) is false
     counter = 0
-    counter_training = 0
-    counter_testing = 0
-    number_of_frames_training = []
-    number_of_frames_testing = []
-    video_training = os.path.join(path_indata, "video", 'training')
-    video_testing = os.path.join(path_indata, "video", 'testing')
-    annotation_training = os.path.join(path_indata, 'annotation', 'training')
-    annotation_testing = os.path.join(path_indata, 'annotation', 'testing')
-    num_frame_path = 'Atari_num_frame_train.csv'
-    num_frame_path_testing = 'Atari_num_frame_testing.csv'
+    number_of_frames = []
+    video = os.path.join(path_indata, "video")
+    annotation = os.path.join(path_indata, 'annotation')
+    num_frame_path = 'Atari_num_frame_FullData.csv'
 
-    if not os.path.exists(os.path.join(path_indata, 'annotation')):
-        os.makedirs(os.path.join(path_indata, 'annotation'))
-    if not os.path.exists(annotation_training):
-        os.makedirs(annotation_training)
-    if not os.path.exists(annotation_testing):
-        os.makedirs(annotation_testing)
 
+    # unzip
+    if not os.path.exists(annotation):
+        os.makedirs(annotation)
     for file in os.listdir(path_indata):
-        # unzip
         if file.endswith("zip"):
             current_path = os.path.join(path_indata, file)
-            game_path = current_path[:-4] #without .zip
+            game_path = current_path[:-4]
             print(game_path)
-            if not os.path.isdir(game_path):
-                with zipfile.ZipFile(current_path, 'r') as zip_ref:
-                    zip_ref.extractall(path_indata)
-            else:
-                print('Already unzipped')
-
-            #moves highscore to normal data
-            if os.path.isdir(os.path.join(game_path, 'highscore')):
-                highscore_files = [d for d in os.listdir(os.path.join(game_path, 'highscore'))
-                                   if os.path.isfile(os.path.join(game_path, 'highscore', d))]
-                for f in highscore_files:
-                    shutil.copy(os.path.join(game_path, 'highscore', f), game_path)
-                shutil.rmtree(os.path.join(game_path, 'highscore'))
-
+            with zipfile.ZipFile(current_path, 'r') as zip_ref:
+                zip_ref.extractall(path_indata)
             for game_file in os.listdir(game_path):
                 # print("     "+game_file)
                 if game_file.endswith("tar.bz2"):
-
-                    counter += 1
-                    if counter%2==0:
-                        temp_video = video_testing
-                        temp_annotation = annotation_testing
-                        temp_number_of_frames = number_of_frames_testing
-                        counter_testing += 1
-                        temp_counter = counter_testing
-                    else:
-                        temp_video = video_training
-                        temp_annotation = annotation_training
-                        temp_number_of_frames = number_of_frames_training
-                        counter_training += 1
-                        temp_counter = counter_training
-
                     sample_name = game_file.split('_')[1]
                     # untar
-                    current_game_path = os.path.join(game_path, game_file)  #e.g.  enduro/284_RZ_5540489_Apr-17-17-38-18.tar.bz2
+                    current_game_path = os.path.join(game_path, game_file)
                     tar = tarfile.open(current_game_path, "r:bz2")
-                    tar.extractall(temp_video) #temp file in 'video
+                    tar.extractall(video)
                     tar.close()
 
                     # renaming videos
-                    temp = os.path.join(temp_video, game_file[:-8])
-                    sample_path = os.path.join(temp_video, '%04d' % temp_counter)  #e.g. video/training/0001
+                    counter += 1
+                    temp = os.path.join(video, game_file[:-8])
+                    sample_path = os.path.join(video, '%04d' % counter)
                     if os.path.isdir(sample_path):
                         shutil.rmtree(sample_path)
                     os.rename(temp, sample_path)
-                    path_annt = os.path.join(temp_annotation, '%04d' % temp_counter, 'maps')
-                    path_annt_discrete = os.path.join(temp_annotation, '%04d' % temp_counter, 'discrete')
-                    if os.path.isdir(os.path.join(temp_annotation,'%04d' % temp_counter)):
-                        shutil.rmtree(os.path.join(temp_annotation,'%04d' % temp_counter)) #ignore_errors=True
-                    os.makedirs(os.path.join(temp_annotation,'%04d' % temp_counter)) #e.g. annotation/training/0001
+                    path_annt = os.path.join(annotation, '%04d' % counter, 'maps')
+                    path_annt_discrete = os.path.join(annotation, '%04d' % counter, 'discrete')
+                    if os.path.isdir(os.path.join(annotation,'%04d' % counter)):
+                        shutil.rmtree(os.path.join(annotation,'%04d' % counter)) #ignore_errors=True
+                    os.makedirs(os.path.join(annotation,'%04d' % counter))
                     os.makedirs(path_annt)
                     os.makedirs(path_annt_discrete)
                     print('-- -- ' + str(counter) + ' -- --')
@@ -140,23 +104,16 @@ def atari_reader(path_indata):  # called if some flag (flagfile) is false
                         if not cv2.imwrite(os.path.join(path_annt_discrete, '%06d.png' %(frame_id)), saliency_map_discrete):
                             print("could not write image!", flush=True)
                     print('total: ' + str(frame_id) + ', null values: ' + str(null_values))
-                    temp_number_of_frames.append(frame_id)
+                    number_of_frames.append(frame_id)
 
                     #TODO: interpolate null values
                     #interpolate_null_values(full_data, null_values, path_annt, frame_id)
-    print('training: ' + str(number_of_frames_training))
-    print('testing: ' + str(number_of_frames_testing))
+    print(number_of_frames)
     if os.path.isfile(num_frame_path):
-        os.remove(num_frame_path)
-    if os.path.isfile(num_frame_path_testing):
         os.remove(num_frame_path)
     with open(num_frame_path, "w", newline = '') as f:
         writer = csv.writer(f)
-        for element in number_of_frames_training:
-            writer.writerow([element])
-    with open(num_frame_path_testing, "w", newline = '') as f:
-        writer = csv.writer(f)
-        for element in number_of_frames_testing:
+        for element in number_of_frames:
             writer.writerow([element])
 
 def create_gaussian_map(positions):

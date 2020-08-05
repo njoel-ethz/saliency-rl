@@ -18,19 +18,26 @@ class DHF1KDataset(Dataset):
          self.path_data = path_data
          self.len_snippet = len_snippet
          if (path_data == 'DHF1K_dataset'):
-             self.list_num_frame = [int(row[0]) for row in csv.reader(open('DHF1K_num_frame_train.csv', 'r'))]#'Atari_num_frame_train.csv', 'r'))]
+             path_to_file = 'DHF1K_num_frame_train.csv'#'Atari_num_frame_train.csv', 'r'))]
          else:
-             self.list_num_frame = [int(row[0]) for row in csv.reader(open('Atari_num_frame_train.csv', 'r'))]
+             path_to_file = 'Atari_num_frame_train.csv'
+         csv_reader = csv.reader(open(path_to_file, 'r'))
+         list_of_tuples = list(map(tuple, csv_reader))  #list of (#samples, file_name)
+         num_frame = []
+         for (n_samples, name) in list_of_tuples:
+             num_frame.append((int(n_samples), name))
+         self.list_num_frame = num_frame
 
     def __len__(self):
         return len(self.list_num_frame)
 
     def __getitem__(self, idx):
-        file_name = '%04d'%(idx+1)
+        file_name = self.list_num_frame[idx][1]
+        #file_name = '%04d'%(idx+1)
         path_clip = os.path.join(self.path_data, 'video', 'training', file_name)
         path_annt = os.path.join(self.path_data, 'annotation', 'training', file_name, 'maps')
 
-        start_idx = np.random.randint(1, self.list_num_frame[idx]-self.len_snippet+1) #(0, ..) to keep 1st frame
+        start_idx = np.random.randint(1, self.list_num_frame[idx][0]-self.len_snippet+1) #(0, ..) to keep 1st frame
 
         v = np.random.random()
         clip = []
