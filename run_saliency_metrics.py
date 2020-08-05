@@ -49,12 +49,16 @@ def main():
     scores['sim_t'] = []
     scores['sim'] = []
 
-    length_array = [int(row[0]) for row in csv.reader(open('Atari_num_frame_testing.csv', 'r'))]
-
+    csv_reader = csv.reader(open('Atari_num_frame_testing.csv', 'r'))
+    list_of_tuples = list(map(tuple, csv_reader))  # list of (#samples, file_name)
+    length_array = [i[0] for i in list_of_tuples]
+    index_array = [i[1] for i in list_of_tuples]
+    print(length_array)
+    print(index_array)
     for i in tqdm(range(num_iters)):
         # file, frame_number = get_random_sample(length_array)
 
-        file, frame_number, images = get_random_clip(length_array, path_frames)
+        file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
         #
         # for frame in images:
         #     cv2.imshow('debug', frame)
@@ -79,7 +83,7 @@ def main():
         # cv2.imshow('with original model', original_smap)
         # cv2.waitKey()
 
-        gt = cv2.imread(os.path.join(path_annt, '%04d'%(file), 'discrete', '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        gt = cv2.imread(os.path.join(path_annt, file, 'discrete', '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
 
         cv2.imwrite(os.path.join(path_output, '%06d_01orig_%06d.png' % (i, frame_number)), original_smap)
         cv2.imwrite(os.path.join(path_output, '%06d_02tuned%06d.png' % (i, frame_number)), tuned_smap)
@@ -98,7 +102,7 @@ def main():
         scores['sim_t'].append(similarity(tuned_smap, gt))
 
         if calculate_shuff:
-            file, frame_number, images = get_random_clip(length_array, path_frames)
+            file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
 
             #model_original.images_dict[0] = images
             #model_finetuned.images_dict[0] = images
@@ -141,20 +145,21 @@ def get_random_sample(length_array):
     frame += 1
     return file, frame
 
-def get_random_clip(length_array, path_frames):
-    file = random.randint(0, len(length_array) - 1)
-    start_idx = random.randint(32, length_array[file] - 1 - 32)
+def get_random_clip(length_array, index_array, path_frames):
+    rand_file = random.randint(0, len(length_array) - 1)
 
-    file = file + 1
+    start_idx = random.randint(32, length_array[rand_file] - 1 - 32)
+    file_name = index_array[rand_file]
+
 
     clip = []
     for i in range(32):
-        image_path = os.path.join(path_frames, '%04d' % file, '%06d.png' % (start_idx + i + 1))
+        image_path = os.path.join(path_frames, file_name, '%06d.png' % (start_idx + i + 1))
         # print(os.path.abspath(image_path))
         img = cv2.imread(image_path)
         clip.append(img)
 
-    return file, start_idx + 32, clip
+    return file_name, start_idx + 32, clip
 
 def produce_saliency_map(snippet, sal_model):
     clip = transform(snippet)

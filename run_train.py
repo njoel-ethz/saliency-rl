@@ -1,5 +1,6 @@
 import sys
 import os
+import random
 import numpy as np
 import cv2
 import time
@@ -19,8 +20,7 @@ def main():
     # optional two command-line arguments
     path_indata = 'Atari_dataset'
     path_output = 'output'
-    path_num_frame_full = 'Atari_num_frame_FullData.csv'
-    path_num_frame = 'Atari_num_frame_train.csv'
+
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
         if len(sys.argv) > 2:
@@ -37,7 +37,7 @@ def main():
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
 
-    split_train_test_set(path_num_frame_full, path_num_frame)
+    split_train_test_set()
     model = TASED_v2()
 
     # load the weight file and copy the parameters
@@ -158,8 +158,35 @@ def main():
     plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
 
 def split_train_test_set(path_full, path_train):
+    path_full = 'Atari_num_frame_FullData.csv'
+    path_train = 'Atari_num_frame_train.csv'
+    path_test = 'Atari_num_frame_testing.csv'
+
     list_num_frame = [int(row[0]) for row in csv.reader(open(path_full, 'r'))]
-    
+    total_len = len(list_num_frame)
+    idx = range(1, total_len+1)
+    z = zip(list_num_frame, idx)
+    random.shuffle(z)
+    list_num_frame, idx = zip(*z)
+    train_list, train_idx = list_num_frame[:total_len/2], idx[:total_len/2]
+    test_list, test_idx = list_num_frame[total_len/2:], idx[total_len/2:]
+    train_strings = []
+    test_strings = []
+
+    for i in range(len(train_list)):
+        train_strings.append(str(train_list[i])+',%04d'%train_idx[i])
+    for i in range(len(test_list)):
+        train_strings.append(str(test_list[i])+',%04d'%test_idx[i])
+
+    with open(path_train, 'wb') as file:
+        for line in train_strings:
+            file.write(line)
+            file.write('\n')
+    with open(path_test, 'wb') as file:
+        for line in test_strings:
+            file.write(line)
+            file.write('\n')
+
     return 0
 
 def visualize(output, path_indata, file_name, picture_name, step):
