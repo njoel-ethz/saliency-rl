@@ -27,7 +27,7 @@ def main():
             path_output = sys.argv[2]
 
     # we checked that using only 2 gpus is enough to produce similar results
-    num_gpu = 1
+    num_gpu = 1 #2 on Server
     pile = 5
     batch_size = 1 #6 on Server
     num_iters = 1000
@@ -74,8 +74,8 @@ def main():
 
     # parameter setting for fine-tuning
     params = []
-    lr1 = 0.001
-    lr2 = 0.01
+    lr1 = 0.002
+    lr2 = 0.05
     for key, value in dict(model.named_parameters()).items():
         if 'convtsp' in key:
             params += [{'params':[value], 'key':key+'(new)'}]
@@ -157,32 +157,36 @@ def main():
     plt.ylabel('Averaged loss: ' + path_indata + ', weights: ' + file_weight + ', lr/optim = ' + str((lr1, lr2)))
     plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
 
-def split_train_test_set(path_full, path_train):
+    os.system('python run_saliency_metrics.py')
+
+def split_train_test_set():
     path_full = 'Atari_num_frame_FullData.csv'
     path_train = 'Atari_num_frame_train.csv'
     path_test = 'Atari_num_frame_testing.csv'
 
     list_num_frame = [int(row[0]) for row in csv.reader(open(path_full, 'r'))]
     total_len = len(list_num_frame)
+    half_len = int(np.ceil(total_len/2))
     idx = range(1, total_len+1)
-    z = zip(list_num_frame, idx)
+    z = list(zip(list_num_frame, idx))
     random.shuffle(z)
     list_num_frame, idx = zip(*z)
-    train_list, train_idx = list_num_frame[:total_len/2], idx[:total_len/2]
-    test_list, test_idx = list_num_frame[total_len/2:], idx[total_len/2:]
+
+    train_list, train_idx = list_num_frame[:half_len], idx[:half_len]
+    test_list, test_idx = list_num_frame[half_len:], idx[half_len:]
     train_strings = []
     test_strings = []
 
     for i in range(len(train_list)):
         train_strings.append(str(train_list[i])+',%04d'%train_idx[i])
     for i in range(len(test_list)):
-        train_strings.append(str(test_list[i])+',%04d'%test_idx[i])
+        test_strings.append(str(test_list[i])+',%04d'%test_idx[i])
 
-    with open(path_train, 'wb') as file:
+    with open(path_train, 'w') as file:
         for line in train_strings:
             file.write(line)
             file.write('\n')
-    with open(path_test, 'wb') as file:
+    with open(path_test, 'w') as file:
         for line in test_strings:
             file.write(line)
             file.write('\n')
@@ -197,7 +201,7 @@ def visualize(output, path_indata, file_name, picture_name, step):
     np_array = gaussian_filter(np_array, sigma=7)
     np_array = (np_array/np.max(np_array)*255.).astype(np.uint8)
     mask = Image.fromarray(np_array)  # gives a 384x224 Image object
-    path_to_clip = os.path.join(path_indata, 'video', 'training', file_name, picture_name)
+    path_to_clip = os.path.join(path_indata, 'video', file_name, picture_name)
     video_img = cv2.resize(cv2.imread(path_to_clip, cv2.IMREAD_COLOR), (384, 224))
     video_img = Image.fromarray(video_img)
     red_img = Image.new('RGB', (384, 224), (0, 0, 255))

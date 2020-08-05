@@ -21,8 +21,8 @@ def main():
     #save_inference_files = True
 
     tuned_weights = os.path.join('Atari_dataset', weight_file)
-    path_annt = os.path.join('Atari_dataset', 'annotation', 'testing')
-    path_frames = os.path.join('Atari_dataset', 'video', 'testing')
+    path_annt = os.path.join('Atari_dataset', 'annotation')
+    path_frames = os.path.join('Atari_dataset', 'video')
     path_output = os.path.join('output', 'temp')
 
     #path_tuned_smap = ''
@@ -51,10 +51,9 @@ def main():
 
     csv_reader = csv.reader(open('Atari_num_frame_testing.csv', 'r'))
     list_of_tuples = list(map(tuple, csv_reader))  # list of (#samples, file_name)
-    length_array = [i[0] for i in list_of_tuples]
+    length_array = [int(i[0]) for i in list_of_tuples]
     index_array = [i[1] for i in list_of_tuples]
-    print(length_array)
-    print(index_array)
+
     for i in tqdm(range(num_iters)):
         # file, frame_number = get_random_sample(length_array)
 
