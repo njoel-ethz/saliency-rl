@@ -15,6 +15,7 @@ from scipy.ndimage import gaussian_filter
 #import inference_controller
 
 def main():
+    shuffle_data_beforehand = False
     weight_file = 'enduro_weights_1000.pt' #'produced_weight_file.pt' on Server
     num_iters = 100
     calculate_shuff = True
@@ -49,6 +50,9 @@ def main():
     scores['sim_t'] = []
     scores['sim'] = []
 
+    if shuffle_data_beforehand:
+        split_train_test_set()
+
     csv_reader = csv.reader(open('Atari_num_frame_testing.csv', 'r'))
     list_of_tuples = list(map(tuple, csv_reader))  # list of (#samples, file_name)
     length_array = [int(i[0]) for i in list_of_tuples]
@@ -58,6 +62,7 @@ def main():
         # file, frame_number = get_random_sample(length_array)
 
         file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
+
         #
         # for frame in images:
         #     cv2.imshow('debug', frame)
@@ -327,11 +332,47 @@ def auc_shuff_acl(s_map, gt, other_map, n_splits=100, stepsize=0.1):
 
     return np.mean(auc)
 
-
 def similarity(s_map, gt):
     s_map_norm = normalize_map(s_map)
     gt_norm = normalize_map(gt)
     return np.sum(np.minimum(s_map_norm, gt_norm))
+
+def split_train_test_set():
+    path_full = 'Atari_num_frame_FullData.csv'
+    path_train = 'Atari_num_frame_train.csv'
+    path_test = 'Atari_num_frame_testing.csv'
+
+    list_num_frame = [int(row[0]) for row in csv.reader(open(path_full, 'r'))]
+    total_len = len(list_num_frame)
+    half_len = int(np.floor(total_len/2)) #for 50/50 split
+    idx = range(1, total_len+1)
+    z = list(zip(list_num_frame, idx))
+
+    #comment this out for training on ~ highscore data
+    random.shuffle(z)
+
+    list_num_frame, idx = zip(*z)
+
+    test_list, test_idx = list_num_frame[:half_len], idx[:half_len]
+    train_list, train_idx = list_num_frame[half_len:], idx[half_len:]
+    train_strings = []
+    test_strings = []
+
+    for i in range(len(train_list)):
+        train_strings.append(str(train_list[i])+',%04d'%train_idx[i])
+    for i in range(len(test_list)):
+        test_strings.append(str(test_list[i])+',%04d'%test_idx[i])
+
+    with open(path_train, 'w') as file:
+        for line in train_strings:
+            file.write(line)
+            file.write('\n')
+    with open(path_test, 'w') as file:
+        for line in test_strings:
+            file.write(line)
+            file.write('\n')
+
+    return 0
 
 if __name__ == '__main__':
     main()

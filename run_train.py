@@ -20,6 +20,7 @@ def main():
     # optional two command-line arguments
     path_indata = 'Atari_dataset'
     path_output = 'output'
+    shuffle_data = True
 
     if len(sys.argv) > 1:
         path_indata = sys.argv[1]
@@ -36,8 +37,9 @@ def main():
     path_output = os.path.join(path_output, time.strftime("%m-%d_%H-%M-%S"))
     if not os.path.isdir(path_output):
         os.makedirs(path_output)
+    if shuffle_data or not os.path.isfile('Atari_num_frame_train.csv'):
+        split_train_test_set()
 
-    split_train_test_set()
     model = TASED_v2()
 
     # load the weight file and copy the parameters
@@ -74,8 +76,8 @@ def main():
 
     # parameter setting for fine-tuning
     params = []
-    lr1 = 0.002
-    lr2 = 0.05
+    lr1 = 0.002 #0.0001 David
+    lr2 = 0.05 #0.01 David
     for key, value in dict(model.named_parameters()).items():
         if 'convtsp' in key:
             params += [{'params':[value], 'key':key+'(new)'}]
@@ -133,7 +135,7 @@ def main():
 
             loss_sum = 0
             # adjust learning rate
-            if step in [750, 950]:
+            if step in [250, 750, 950]:
                 for opt in optimizer.param_groups:
                     if 'new' in opt['key']:
                         opt['lr'] *= lr_adaption   #0.1
@@ -154,7 +156,8 @@ def main():
     plt.savefig(os.path.join(path_indata, "loss.png"))
 
     plt.plot(index_statistic, averaged_loss_statistic, color='r')
-    plt.ylabel('Averaged loss: ' + path_indata + ', weights: ' + file_weight + ', lr/optim = ' + str((lr1, lr2)))
+    plt.ylabel('Averaged loss')
+    plt.xlabel(path_indata + ', weights: ' + file_weight + ', lr/optim = ' + str((lr1, lr2)))
     plt.savefig(os.path.join(path_indata, "averaged_loss.png"))
 
     os.system('python run_saliency_metrics.py')
@@ -166,14 +169,17 @@ def split_train_test_set():
 
     list_num_frame = [int(row[0]) for row in csv.reader(open(path_full, 'r'))]
     total_len = len(list_num_frame)
-    half_len = int(np.ceil(total_len/2))
+    half_len = int(np.floor(total_len/2)) #for 50/50 split
     idx = range(1, total_len+1)
     z = list(zip(list_num_frame, idx))
+
+    #comment this out for training on ~ highscore data
     random.shuffle(z)
+
     list_num_frame, idx = zip(*z)
 
-    train_list, train_idx = list_num_frame[:half_len], idx[:half_len]
-    test_list, test_idx = list_num_frame[half_len:], idx[half_len:]
+    test_list, test_idx = list_num_frame[:half_len], idx[:half_len]
+    train_list, train_idx = list_num_frame[half_len:], idx[half_len:]
     train_strings = []
     test_strings = []
 
