@@ -11,7 +11,7 @@ Files: Windows <-> Linux Server
 scp C:\Users\joel\Documents\saliency-rl\Atari_dataset.zip njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset.zip
 unzip \*.zip
 scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/averaged_loss.png C:\Users\joel\Documents\saliency-rl\Atari_dataset\loss_server.png
-scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/produced_weight_file.pt C:\Users\joel\Documents\stable-baselines\saliency_weights\enduro_weights_3000.pt
+scp njoel@ait-server-03:/local/home/njoel/saliency-rl/Atari_dataset/produced_weight_file.pt C:\Users\joel\Documents\stable-baselines\saliency_weights\space_invaders_weights.pt
 
 Devices:
 watch -n 1 nvidia-smi

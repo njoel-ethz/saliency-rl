@@ -15,11 +15,13 @@ from scipy.ndimage import gaussian_filter
 #import inference_controller
 
 def main():
-    shuffle_data_beforehand = False
-    weight_file = 'enduro_weights_1000.pt' #'produced_weight_file.pt' on Server
+    shuffle_data_beforehand = True
+    weight_file = 'space_invaders_weights_1002.pt' #'produced_weight_file.pt' on Server
     num_iters = 100
     calculate_shuff = True
     #save_inference_files = True
+    name = "SpaceInvaders Metrics: %d iterations" %num_iters
+    save_errors = False
 
     tuned_weights = os.path.join('Atari_dataset', weight_file)
     path_annt = os.path.join('Atari_dataset', 'annotation')
@@ -29,7 +31,7 @@ def main():
     #path_tuned_smap = ''
     #path_original_smap = ''
 
-    model_original = build_sal_model('TASED_updated.pt')
+    model_original = build_sal_model('TASED_updated.pt') #  'space_invaders_weights_1001.pt') #
     model_finetuned = build_sal_model(tuned_weights)
 
     #model_original = inferencer_model.Inferencer_Model()
@@ -58,15 +60,19 @@ def main():
     length_array = [int(i[0]) for i in list_of_tuples]
     index_array = [i[1] for i in list_of_tuples]
 
-    for i in tqdm(range(num_iters)):
+    #for i in tqdm(range(num_iters)):
+    i = 0
+    error_counter = 0
+    while i < num_iters:
+        print("[%d/%d]" %(i, num_iters))
         # file, frame_number = get_random_sample(length_array)
 
         file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
 
         #
-        # for frame in images:
-        #     cv2.imshow('debug', frame)
-        #     cv2.waitKey()
+        """for frame in images:
+            cv2.imshow('debug', frame)
+            cv2.waitKey()"""
 
         #model_original.images_dict[0] = images
         #model_finetuned.images_dict[0] = images
@@ -80,6 +86,21 @@ def main():
         original_smap = produce_saliency_map(images, model_original)
         tuned_smap = produce_saliency_map(images, model_finetuned)
 
+        if np.max(original_smap) > 0:
+            i += 1
+        else:
+            error_counter += 1
+            if save_errors:
+                path_errors = os.path.join(path_output, str(error_counter))
+                if not os.path.isdir(path_errors):
+                    os.makedirs(path_errors)
+                for j in range(len(images)):
+                    cv2.imwrite(os.path.join(path_errors, '%04d.png' %(j)), images[j])
+                cv2.imwrite(os.path.join(path_errors, 'smap_original.png'), original_smap)
+                cv2.imwrite(os.path.join(path_errors, 'smap_tuned.png'), tuned_smap)
+            continue
+        #print("original" + str(np.max(original_smap)))
+        #print("Tuned" + str(np.max(tuned_smap)))
         #
         # cv2.imshow('with tuned model', tuned_smap)
         # cv2.waitKey()
@@ -93,8 +114,10 @@ def main():
         cv2.imwrite(os.path.join(path_output, '%06d_02tuned%06d.png' % (i, frame_number)), tuned_smap)
         cv2.imwrite(os.path.join(path_output, '%06d_03input%06d.png' % (i, frame_number)), images[-1])
 
-        # cv2.imshow('debug', gt)
-        # cv2.waitKey()
+        # print(os.path.join(path_annt, file, 'discrete', '%06d.png'%(frame_number)))
+
+        #cv2.imshow('debug', gt)
+        #cv2.waitKey()
 
         #tuned_smap = cv2.imread(os.path.join(path_output, '%06d_02tuned%06d.png' % (i, frame_number)), cv2.IMREAD_GRAYSCALE)
         #original_smap = cv2.imread(os.path.join(path_output, '%06d_01orig_%06d.png' % (i, frame_number)), cv2.IMREAD_GRAYSCALE)
@@ -106,22 +129,30 @@ def main():
         scores['sim_t'].append(similarity(tuned_smap, gt))
 
         if calculate_shuff:
-            file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
+            normalize_properly = False
+            while not normalize_properly:
+                file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
 
-            #model_original.images_dict[0] = images
-            #model_finetuned.images_dict[0] = images
+                #model_original.images_dict[0] = images
+                #model_finetuned.images_dict[0] = images
 
-            #controller_original.inferencer.process_all()
-            #controller_finetuned.inferencer.process_all()
+                #controller_original.inferencer.process_all()
+                #controller_finetuned.inferencer.process_all()
 
-            #original_smap_other = model_original.current_saliency_map_dict[0][:, :, 0]
-            #tuned_smap_other = model_finetuned.current_saliency_map_dict[0][:, :, 0]
+                #original_smap_other = model_original.current_saliency_map_dict[0][:, :, 0]
+                #tuned_smap_other = model_finetuned.current_saliency_map_dict[0][:, :, 0]
 
-            original_smap_other = produce_saliency_map(images, model_original)
-            tuned_smap_other = produce_saliency_map(images, model_finetuned)
+                original_smap_other = produce_saliency_map(images, model_original)
+                tuned_smap_other = produce_saliency_map(images, model_finetuned)
 
-            scores['shuff_t'].append(auc_shuff_acl(tuned_smap, gt, tuned_smap_other))
-            scores['shuff'].append((auc_shuff_acl(original_smap, gt, original_smap_other)))
+                if np.max(original_smap_other) > 0:
+                    normalize_properly = True
+                else:
+                    error_counter += 1
+                    continue
+
+                scores['shuff_t'].append(auc_shuff_acl(tuned_smap, gt, tuned_smap_other))
+                scores['shuff'].append((auc_shuff_acl(original_smap, gt, original_smap_other)))
 
     judd_average_tuned = sum(scores['judd_t'])/len(scores['judd_t'])
     judd_average_original = sum(scores['judd'])/len(scores['judd'])
@@ -136,6 +167,8 @@ def main():
         shuff_average_tuned = sum(scores['shuff_t'])/len(scores['shuff_t'])
         shuff_average_original = sum(scores['shuff'])/len(scores['shuff'])
 
+
+    print(name + " (%d zero valued original_smap's)" %(error_counter))
     print('original (AUC_Judd, AUC_shuff, similarity): ' + str((judd_average_original, shuff_average_original, sim_average_original)))
     print('tuned (AUC_Judd, AUC_shuff, similarity): ' + str((judd_average_tuned, shuff_average_tuned, sim_average_tuned)))
 
@@ -169,6 +202,7 @@ def produce_saliency_map(snippet, sal_model):
     clip = transform(snippet)
     smap = process(sal_model, clip)
     # shape of smap: (210, 160, 1) np array
+    # print(np.max(smap))
 
     return smap
 
@@ -184,12 +218,12 @@ def process(model, clip):
     ''' process one clip and save the predicted saliency map '''
     with torch.no_grad():
         smap = model(clip.cuda()).cpu().data[0]
-
     smap = (smap.numpy()*255.).astype(np.int)/255.
+    #print(smap)
     smap = gaussian_filter(smap, sigma=7)
     smap = cv2.resize(smap, (160, 210))
 
-    return (smap/np.max(smap)*255.).astype(np.uint8)
+    return (smap/np.max(smap)*255.).astype(np.uint8) #error if smap is zero everywhere
 
 def build_sal_model(file_weight):
     model = TASED_v2()
@@ -243,6 +277,7 @@ def normalize_map(s_map):
 def auc_judd(s_map, gt):
     # ground truth is discrete, s_map is continous and normalized
     s_map_norm = normalize_map(s_map)
+    #print(np.max(s_map_norm))
     gt_norm = normalize_map(gt)
     assert np.max(gt_norm) == 1.0,\
         'Ground truth not discretized properly max value > 1.0'
