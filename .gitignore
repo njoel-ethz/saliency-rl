@@ -1,5 +1,4 @@
 /output/
-/Atari_dataset/
 /DHF1K_dataset/
 /Atari_dataset.zip
 /DHF1K_dataset.zip
@@ -7,5 +6,35 @@
 /environment.yaml
 
 /__pycache__/
+
+/Atari_num_frame_testing.csv
+/Atari_num_frame_train.csv
+/Atari_num_frame_train_server.csv
+/DHF1K_num_frame_train_original.csv
+
+/commands.txt
+/space_invaders_weights_1001.pt
+/path-backup.txt
+/saliency_metrics.py
+/arial.ttf
+/measurements/enduro_loss_1000.png
+/measurements/enduro_loss_3000.png
+
+/Atari_dataset/annotation/
+/Atari_dataset/annotation_enduro/
+/Atari_dataset/annotation_montezuma/
+/Atari_dataset/annotation_space_invaders/
+/Atari_dataset/enduro/
+/Atari_dataset/montezuma_revenge/
+/Atari_dataset/more_data/
+/Atari_dataset/space_invaders/
+/Atari_dataset/training_visualized/
+/Atari_dataset/video/
+/Atari_dataset/video_enduro/
+/Atari_dataset/video_montezuma/
+/Atari_dataset/video_space_invaders/
+/Atari_dataset/saliency_weights/
+/Atari_dataset/training_losses/
+/Atari_dataset/montezuma_revenge.zip
 
 *.zip

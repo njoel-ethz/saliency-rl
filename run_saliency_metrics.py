@@ -16,7 +16,7 @@ from scipy.ndimage import gaussian_filter
 
 def main():
     shuffle_data_beforehand = True
-    weight_file = 'space_invaders_weights_1002.pt' #'produced_weight_file.pt' on Server
+    weight_file = 'enduro_weights_1000.pt' #'produced_weight_file.pt' on Server
     num_iters = 100
     calculate_shuff = True
     #save_inference_files = True
@@ -68,7 +68,9 @@ def main():
         # file, frame_number = get_random_sample(length_array)
 
         file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
-
+        if any(x is None for x in images):
+            print('missing frames!')
+            break
         #
         """for frame in images:
             cv2.imshow('debug', frame)
@@ -109,6 +111,7 @@ def main():
         # cv2.waitKey()
 
         gt = cv2.imread(os.path.join(path_annt, file, 'discrete', '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
+        gt_sim = cv2.imread(os.path.join(path_annt, file, 'maps', '%06d.png'%(frame_number)), cv2.IMREAD_GRAYSCALE)
 
         cv2.imwrite(os.path.join(path_output, '%06d_01orig_%06d.png' % (i, frame_number)), original_smap)
         cv2.imwrite(os.path.join(path_output, '%06d_02tuned%06d.png' % (i, frame_number)), tuned_smap)
@@ -125,14 +128,17 @@ def main():
         scores['judd'].append(auc_judd(original_smap, gt))
         scores['judd_t'].append(auc_judd(tuned_smap, gt))
 
-        scores['sim'].append(similarity(original_smap, gt))
-        scores['sim_t'].append(similarity(tuned_smap, gt))
+        scores['sim'].append(similarity(original_smap, gt_sim))
+        scores['sim_t'].append(similarity(tuned_smap, gt_sim))
 
         if calculate_shuff:
             normalize_properly = False
             while not normalize_properly:
                 file, frame_number, images = get_random_clip(length_array, index_array, path_frames)
 
+                if any(x is None for x in images):
+                    print('missing frames!')
+                    break
                 #model_original.images_dict[0] = images
                 #model_finetuned.images_dict[0] = images
 
@@ -273,6 +279,32 @@ def normalize_map(s_map):
 
     return norm_s_map
 
+def normalize_map_sim(s_map):
+    # normalize the salience map (as done in MIT code)
+    min = np.min(s_map)
+    max = np.max(s_map)
+
+    #print(s_map.shape)
+    #cv2.imshow('debug', s_map)
+    #cv2.waitKey()
+
+    assert max > 0.0,\
+        'Error in normalization. max value not larger than 0'
+
+    norm_s_map = (s_map - min) / (max - min)
+
+    sum = np.sum(norm_s_map)
+    #print(sum)
+    norm_s_map = norm_s_map/sum
+
+    new_sum = np.sum(norm_s_map)
+    #print(new_sum)
+
+    # min_n = np.min(norm_s_map)
+    # max_n = np.max(norm_s_map)
+
+    return norm_s_map
+
 
 def auc_judd(s_map, gt):
     # ground truth is discrete, s_map is continous and normalized
@@ -368,8 +400,8 @@ def auc_shuff_acl(s_map, gt, other_map, n_splits=100, stepsize=0.1):
     return np.mean(auc)
 
 def similarity(s_map, gt):
-    s_map_norm = normalize_map(s_map)
-    gt_norm = normalize_map(gt)
+    s_map_norm = normalize_map_sim(s_map)
+    gt_norm = normalize_map_sim(gt)
     return np.sum(np.minimum(s_map_norm, gt_norm))
 
 def split_train_test_set():
