@@ -1,3 +1,7 @@
+# Saliency-rl
+The Algorithm used to finetune on Atari data is TASED-Net, a saliency prediction algorithm based on convolutional neural networks.
+Citing Min and Corso 2019:
+
 # TASED-Net
 [TASED-Net: Temporally-Aggregating Spatial Encoder-Decoder Network for Video Saliency Detection (ICCV 2019)](http://openaccess.thecvf.com/content_ICCV_2019/html/Min_TASED-Net_Temporally-Aggregating_Spatial_Encoder-Decoder_Network_for_Video_Saliency_Detection_ICCV_2019_paper.html)
 
@@ -59,4 +63,3 @@ You can also specify the input and output directories as command-line arguments.
   year={2019}
 }
 ```
-# saliency-rl
